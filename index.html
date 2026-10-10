@@ -76,12 +76,12 @@
                     <option value="₽">₽ (RUB)</option>
                 </select>
 
-                <button onclick="toggleTheme()" class="p-2 text-slate-600 dark:text-slate-300 hover:text-brand-500 rounded-lg hover:bg-slate-100 dark:hover:bg-darkbg transition-colors" title="Переключить тему">
+                <button onclick="toggleTheme()" class="p-2 text-slate-600 dark:text-slate-300 hover:text-brand-500 rounded-lg hover:bg-slate-100 dark:hover:bg-darkbg transition-colors cursor-pointer" title="Переключить тему">
                     <i id="theme-icon" class="fa-solid fa-moon text-lg"></i>
                 </button>
 
                 <div class="flex items-center pl-2 border-l border-slate-200 dark:border-darkborder">
-                    <button onclick="openAuthModal()" id="auth-btn" class="flex items-center gap-2 text-sm font-semibold text-slate-700 dark:text-slate-200 hover:text-brand-500 transition-colors">
+                    <button onclick="openAuthModal()" id="auth-btn" class="flex items-center gap-2 text-sm font-semibold text-slate-700 dark:text-slate-200 hover:text-brand-500 transition-colors cursor-pointer">
                         <div class="w-8 h-8 rounded-full bg-slate-200 dark:bg-darkbg flex items-center justify-center text-slate-600 dark:text-slate-300">
                             <i class="fa-solid fa-user text-xs"></i>
                         </div>
@@ -96,22 +96,22 @@
     <nav class="bg-white dark:bg-darkcard border-b border-slate-200 dark:border-darkborder transition-colors">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="flex space-x-1 sm:space-x-8 overflow-x-auto custom-scrollbar py-2">
-                <button id="tab-btn-dashboard" onclick="switchTab('dashboard')" class="tab-btn px-4 py-2 text-sm font-semibold rounded-lg text-brand-500 bg-brand-500/10 whitespace-nowrap transition-all">
+                <button id="tab-btn-dashboard" onclick="switchTab('dashboard')" class="tab-btn px-4 py-2 text-sm font-semibold rounded-lg text-brand-500 bg-brand-500/10 whitespace-nowrap transition-all cursor-pointer">
                     <i class="fa-solid fa-chart-pie mr-2"></i>Обзор
                 </button>
-                <button id="tab-btn-accounts" onclick="switchTab('accounts')" class="tab-btn px-4 py-2 text-sm font-semibold rounded-lg text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-darkbg whitespace-nowrap transition-all">
+                <button id="tab-btn-accounts" onclick="switchTab('accounts')" class="tab-btn px-4 py-2 text-sm font-semibold rounded-lg text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-darkbg whitespace-nowrap transition-all cursor-pointer">
                     <i class="fa-solid fa-wallet mr-2"></i>Мои счета
                 </button>
-                <button id="tab-btn-analytics" onclick="switchTab('analytics')" class="tab-btn px-4 py-2 text-sm font-semibold rounded-lg text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-darkbg whitespace-nowrap transition-all">
+                <button id="tab-btn-analytics" onclick="switchTab('analytics')" class="tab-btn px-4 py-2 text-sm font-semibold rounded-lg text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-darkbg whitespace-nowrap transition-all cursor-pointer">
                     <i class="fa-solid fa-chart-line mr-2"></i>Аналитика
                 </button>
-                <button id="tab-btn-wishlist" onclick="switchTab('wishlist')" class="tab-btn px-4 py-2 text-sm font-semibold rounded-lg text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-darkbg whitespace-nowrap transition-all">
+                <button id="tab-btn-wishlist" onclick="switchTab('wishlist')" class="tab-btn px-4 py-2 text-sm font-semibold rounded-lg text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-darkbg whitespace-nowrap transition-all cursor-pointer">
                     <i class="fa-solid fa-heart mr-2"></i>Вишлист & Цели
                 </button>
-                <button id="tab-btn-calendar" onclick="switchTab('calendar')" class="tab-btn px-4 py-2 text-sm font-semibold rounded-lg text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-darkbg whitespace-nowrap transition-all">
+                <button id="tab-btn-calendar" onclick="switchTab('calendar')" class="tab-btn px-4 py-2 text-sm font-semibold rounded-lg text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-darkbg whitespace-nowrap transition-all cursor-pointer">
                     <i class="fa-solid fa-calendar-days mr-2 text-brand-500"></i>Календарь смен
                 </button>
-                <button id="tab-btn-aimind" onclick="switchTab('aimind')" class="tab-btn px-4 py-2 text-sm font-semibold rounded-lg text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-darkbg whitespace-nowrap transition-all">
+                <button id="tab-btn-aimind" onclick="switchTab('aimind')" class="tab-btn px-4 py-2 text-sm font-semibold rounded-lg text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-darkbg whitespace-nowrap transition-all cursor-pointer">
                     <i class="fa-solid fa-robot mr-2 text-brand-500"></i>ИИ MuMind
                 </button>
             </div>
@@ -121,20 +121,20 @@
     <!-- Main Dynamic Content Container -->
     <main class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
 
-        <!-- Quick Transaction Floating Trigger Button -->
-        <div class="flex justify-between items-center bg-white dark:bg-darkcard p-4 rounded-2xl border border-slate-200 dark:border-darkborder shadow-sm">
-            <div>
-                <span class="text-xs text-slate-500 dark:text-slate-400 block font-medium">Общий Баланс Счетов</span>
-                <span id="total-balance-display" class="text-2xl sm:text-3xl font-extrabold text-slate-900 dark:text-white tracking-tight">0 ₸</span>
-            </div>
-            <button onclick="openTransactionModal()" class="px-4 py-2.5 bg-gradient-to-r from-brand-600 to-red-600 hover:from-brand-700 hover:to-red-700 text-white font-bold text-sm rounded-xl shadow-lg shadow-brand-500/25 transition-all flex items-center gap-2 cursor-pointer">
-                <i class="fa-solid fa-plus"></i>
-                <span>Операция</span>
-            </button>
-        </div>
-
         <!-- TAB 1: DASHBOARD -->
         <section id="view-dashboard" class="tab-content space-y-6">
+            <!-- Quick Transaction Floating Trigger Button & Total Balance (Only on Dashboard) -->
+            <div class="flex justify-between items-center bg-white dark:bg-darkcard p-4 rounded-2xl border border-slate-200 dark:border-darkborder shadow-sm">
+                <div>
+                    <span class="text-xs text-slate-500 dark:text-slate-400 block font-medium">Общий Баланс Счетов</span>
+                    <span id="total-balance-display" class="text-2xl sm:text-3xl font-extrabold text-slate-900 dark:text-white tracking-tight">0 ₸</span>
+                </div>
+                <button onclick="openTransactionModal()" class="px-4 py-2.5 bg-gradient-to-r from-brand-600 to-red-600 hover:from-brand-700 hover:to-red-700 text-white font-bold text-sm rounded-xl shadow-lg shadow-brand-500/25 transition-all flex items-center gap-2 cursor-pointer">
+                    <i class="fa-solid fa-plus"></i>
+                    <span>Операция</span>
+                </button>
+            </div>
+
             <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
                 <div class="bg-white dark:bg-darkcard p-5 rounded-2xl border border-slate-200 dark:border-darkborder shadow-sm flex items-center justify-between">
                     <div>
@@ -162,7 +162,7 @@
             <div class="space-y-3">
                 <div class="flex items-center justify-between">
                     <h2 class="text-lg font-bold">Мои Счета</h2>
-                    <button onclick="switchTab('accounts')" class="text-xs font-semibold text-brand-500 hover:underline">Управление счетами</button>
+                    <button onclick="switchTab('accounts')" class="text-xs font-semibold text-brand-500 hover:underline cursor-pointer">Управление счетами</button>
                 </div>
                 <div id="dash-accounts-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4"></div>
             </div>
@@ -170,7 +170,7 @@
             <div class="bg-white dark:bg-darkcard rounded-2xl border border-slate-200 dark:border-darkborder shadow-sm overflow-hidden">
                 <div class="p-4 border-b border-slate-200 dark:border-darkborder flex items-center justify-between">
                     <h3 class="font-bold text-base">Последние транзакции</h3>
-                    <button onclick="switchTab('analytics')" class="text-xs font-semibold text-brand-500">Вся аналитика</button>
+                    <button onclick="switchTab('analytics')" class="text-xs font-semibold text-brand-500 cursor-pointer">Вся аналитика</button>
                 </div>
                 <div class="divide-y divide-slate-100 dark:divide-darkborder" id="recent-transactions-list"></div>
             </div>
@@ -181,7 +181,7 @@
             <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                 <div>
                     <h2 class="text-xl font-extrabold tracking-tight">Управление Счетами</h2>
-                    <p class="text-xs text-slate-500">В MuBudget деньги не хранятся на сервере — это ваш личный безопасный учет.</p>
+                    <p class="text-xs text-slate-500">Добавьте свои счета и карты для ведения точного учета.</p>
                 </div>
                 <button onclick="openModal('modal-add-account')" class="px-4 py-2 bg-slate-900 dark:bg-slate-100 text-white dark:text-slate-900 rounded-xl font-semibold text-sm flex items-center gap-2 self-start cursor-pointer">
                     <i class="fa-solid fa-plus text-xs"></i><span>Добавить Счет</span>
@@ -195,10 +195,10 @@
             <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white dark:bg-darkcard p-4 rounded-2xl border border-slate-200 dark:border-darkborder">
                 <h2 class="text-xl font-extrabold tracking-tight">Финансовая Аналитика</h2>
                 <div class="flex bg-slate-100 dark:bg-darkbg p-1 rounded-xl gap-1 self-start">
-                    <button onclick="setAnalyticsPeriod('day')" id="period-day" class="period-btn px-3 py-1.5 text-xs font-bold rounded-lg text-slate-400">День</button>
-                    <button onclick="setAnalyticsPeriod('week')" id="period-week" class="period-btn px-3 py-1.5 text-xs font-bold rounded-lg text-slate-400">Неделя</button>
-                    <button onclick="setAnalyticsPeriod('month')" id="period-month" class="period-btn px-3 py-1.5 text-xs font-bold bg-brand-500 text-white rounded-lg">Месяц</button>
-                    <button onclick="setAnalyticsPeriod('year')" id="period-year" class="period-btn px-3 py-1.5 text-xs font-bold rounded-lg text-slate-400">Год</button>
+                    <button onclick="setAnalyticsPeriod('day')" id="period-day" class="period-btn px-3 py-1.5 text-xs font-bold rounded-lg text-slate-400 cursor-pointer">День</button>
+                    <button onclick="setAnalyticsPeriod('week')" id="period-week" class="period-btn px-3 py-1.5 text-xs font-bold rounded-lg text-slate-400 cursor-pointer">Неделя</button>
+                    <button onclick="setAnalyticsPeriod('month')" id="period-month" class="period-btn px-3 py-1.5 text-xs font-bold bg-brand-500 text-white rounded-lg cursor-pointer">Месяц</button>
+                    <button onclick="setAnalyticsPeriod('year')" id="period-year" class="period-btn px-3 py-1.5 text-xs font-bold rounded-lg text-slate-400 cursor-pointer">Год</button>
                 </div>
             </div>
 
@@ -231,7 +231,6 @@
             <div class="bg-white dark:bg-darkcard rounded-2xl border border-slate-200 dark:border-darkborder overflow-hidden shadow-sm">
                 <div class="p-4 border-b border-slate-200 dark:border-darkborder flex justify-between items-center">
                     <h3 class="font-bold text-base">История операций</h3>
-                    <input type="text" id="transaction-search" oninput="renderTransactionsList()" placeholder="Поиск..." class="pl-3 pr-3 py-1 text-xs rounded-xl bg-slate-100 dark:bg-darkbg border border-slate-200 dark:border-darkborder focus:outline-none">
                 </div>
                 <div class="divide-y divide-slate-100 dark:divide-darkborder" id="all-transactions-list"></div>
             </div>
@@ -242,7 +241,7 @@
             <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                 <div>
                     <h2 class="text-xl font-extrabold tracking-tight">Вишлист & Цели</h2>
-                    <p class="text-xs text-slate-500">Копите на то, что важно, пополняя цели со счетов.</p>
+                    <p class="text-xs text-slate-500">Добавляйте свои желания и управляйте ими.</p>
                 </div>
                 <button onclick="openModal('modal-wishlist')" class="px-4 py-2 bg-brand-500 hover:bg-brand-600 text-white rounded-xl font-semibold text-sm shadow-md self-start cursor-pointer">
                     <i class="fa-solid fa-plus text-xs"></i><span>Добавить цель</span>
@@ -256,7 +255,7 @@
             <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white dark:bg-darkcard p-5 rounded-2xl border border-slate-200 dark:border-darkborder">
                 <div>
                     <h2 class="text-xl font-extrabold tracking-tight">Календарь смен и подработок</h2>
-                    <p class="text-xs text-slate-500 mt-0.5">Чистый журнал учета смен (Night, Late, Day, Morning, Off, Vacation). Баланс счетов при этом не затрагивается.</p>
+                    <p class="text-xs text-slate-500 mt-0.5">Журнал смен (не влияет на баланс счетов).</p>
                 </div>
                 <button onclick="openModal('modal-shift')" class="px-4 py-2.5 bg-brand-500 hover:bg-brand-600 text-white rounded-xl font-bold text-sm shadow-md shadow-brand-500/20 flex items-center gap-2 self-start cursor-pointer">
                     <i class="fa-solid fa-plus"></i><span>Отметить смену</span>
@@ -304,16 +303,16 @@
             </div>
         </section>
 
-        <!-- TAB 6: AI MUMIND -->
+        <!-- TAB 6: AI MUMIND (ЧИСТЫЙ СОВЕТНИК) -->
         <section id="view-aimind" class="tab-content hidden space-y-6">
             <div class="bg-gradient-to-r from-brand-600 to-rose-600 p-6 rounded-3xl text-white shadow-xl relative overflow-hidden flex flex-col sm:flex-row items-center justify-between gap-6">
                 <div class="space-y-2 z-10">
                     <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/20 backdrop-blur-md text-xs font-bold uppercase tracking-wider">
                         <i class="fa-solid fa-robot"></i> ИИ MuMind Financial Coach
                     </div>
-                    <h2 class="text-2xl sm:text-3xl font-black">Твой персональный финансовый наставник</h2>
+                    <h2 class="text-2xl sm:text-3xl font-black">Ваш персональный финансовый советник</h2>
                     <p class="text-xs sm:text-sm text-white/90 max-w-2xl leading-relaxed">
-                        Здесь собран подробный разбор твоего бюджета, арендной платы, накоплений и планов развития в IT и творчестве.
+                        Интеллектуальный помощник, который анализирует ваши реальные доходы и расходы, давая персональные рекомендации по накоплению и оптимизации бюджета.
                     </p>
                 </div>
                 <div class="w-16 h-16 rounded-2xl bg-white/20 backdrop-blur-md flex items-center justify-center text-3xl shrink-0">
@@ -321,36 +320,20 @@
                 </div>
             </div>
 
-            <div class="bg-white dark:bg-darkcard rounded-3xl border border-slate-200 dark:border-darkborder p-6 sm:p-8 space-y-8 shadow-sm">
-                <div class="space-y-4">
-                    <h3 class="text-lg font-extrabold text-brand-500 flex items-center gap-2">
-                        <span class="w-7 h-7 rounded-lg bg-brand-500/10 flex items-center justify-center text-sm font-bold">1</span>
-                        Твои финансы сейчас
-                    </h3>
-                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                        <div class="bg-slate-50 dark:bg-darkbg p-4 rounded-2xl border border-slate-200 dark:border-darkborder">
-                            <span class="text-xs text-slate-500 block font-medium">Ежемесячные поступления</span>
-                            <span class="text-2xl font-black text-emerald-500 mt-1 block">180 000 ₸</span>
-                            <span class="text-[11px] text-slate-400 mt-1 block">Зарплата (130k) + Стипендия (50k)</span>
-                        </div>
-                        <div class="bg-slate-50 dark:bg-darkbg p-4 rounded-2xl border border-slate-200 dark:border-darkborder">
-                            <span class="text-xs text-slate-500 block font-medium">Квартира (Аренда)</span>
-                            <span class="text-2xl font-black text-brand-500 mt-1 block">50 000 ₸</span>
-                            <span class="text-[11px] text-brand-500 mt-1 block font-semibold">Забирает 28% дохода</span>
-                        </div>
-                        <div class="bg-slate-50 dark:bg-darkbg p-4 rounded-2xl border border-slate-200 dark:border-darkborder">
-                            <span class="text-xs text-slate-500 block font-medium">Остаётся после аренды</span>
-                            <span class="text-2xl font-black text-slate-900 dark:text-white mt-1 block">130 000 ₸</span>
-                            <span class="text-[11px] text-slate-400 mt-1 block">До вычета продуктов и транспорта</span>
-                        </div>
-                    </div>
+            <div class="bg-white dark:bg-darkcard rounded-3xl border border-slate-200 dark:border-darkborder p-6 sm:p-8 space-y-6 shadow-sm">
+                <h3 class="text-lg font-extrabold text-brand-500 flex items-center gap-2">
+                    <span class="w-7 h-7 rounded-lg bg-brand-500/10 flex items-center justify-center text-sm font-bold">💡</span>
+                    Рекомендации ИИ на основе вашей активности
+                </h3>
+                <div id="ai-advice-container" class="bg-slate-50 dark:bg-darkbg p-5 rounded-2xl border border-slate-200 dark:border-darkborder text-sm text-slate-700 dark:text-slate-300 leading-relaxed space-y-2">
+                    <p>Загрузите счета и добавьте несколько транзакций, чтобы ИИ проанализировал ваши финансовые привычки.</p>
                 </div>
             </div>
         </section>
 
     </main>
 
-    <!-- MODAL: ADD TRANSACTION (ИСПРАВЛЕНО И ДОБАВЛЕНО) -->
+    <!-- MODAL: ADD TRANSACTION -->
     <div id="modal-transaction" class="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm hidden flex items-center justify-center p-4">
         <div class="bg-white dark:bg-darkcard border border-slate-200 dark:border-darkborder w-full max-w-md rounded-2xl p-6 shadow-2xl relative">
             <button onclick="closeModal('modal-transaction')" class="absolute right-4 top-4 text-slate-400 hover:text-white text-lg cursor-pointer"><i class="fa-solid fa-xmark"></i></button>
@@ -460,7 +443,7 @@
             <form onsubmit="handleSaveAccount(event)" class="space-y-4">
                 <div>
                     <label class="block text-xs font-semibold text-slate-500 mb-1">Название</label>
-                    <input type="text" id="acc-name-input" placeholder="Например: Jusan Bank" required class="w-full bg-slate-50 dark:bg-darkbg border border-slate-200 dark:border-darkborder rounded-xl p-2.5 text-sm">
+                    <input type="text" id="acc-name-input" placeholder="Например: Kaspi Gold" required class="w-full bg-slate-50 dark:bg-darkbg border border-slate-200 dark:border-darkborder rounded-xl p-2.5 text-sm">
                 </div>
                 <div>
                     <label class="block text-xs font-semibold text-slate-500 mb-1">Начальный баланс</label>
@@ -508,33 +491,18 @@
 
     <!-- JAVASCRIPT APP LOGIC -->
     <script>
-        const STORAGE_KEY = 'mubudget_state_classic_v3';
+        const STORAGE_KEY = 'mubudget_state_clean_v5';
 
         let state = {
             theme: 'dark',
             currency: '₸',
             user: { name: 'Гость', email: '', phone: '' },
-            accounts: [
-                { id: 'acc_kaspi', name: 'Kaspi Gold', balance: 150000, icon: 'fa-credit-card', gradient: 'from-red-600 to-rose-700' },
-                { id: 'acc_halyk', name: 'Halyk Bank', balance: 85000, icon: 'fa-building-columns', gradient: 'from-emerald-600 to-teal-700' },
-                { id: 'acc_cash', name: 'Наличные', balance: 20000, icon: 'fa-money-bill-wave', gradient: 'from-amber-500 to-orange-600' },
-                { id: 'acc_other', name: 'Другая карта', balance: 45000, icon: 'fa-wallet', gradient: 'from-slate-700 to-slate-900' }
-            ],
-            transactions: [
-                { id: 't_1', type: 'income', accountId: 'acc_kaspi', category: 'Зарплата', amount: 130000, note: 'Зарплата', date: '2026-10-01' },
-                { id: 't_2', type: 'income', accountId: 'acc_kaspi', category: 'Зарплата', amount: 50000, note: 'Стипендия', date: '2026-10-01' },
-                { id: 't_3', type: 'expense', accountId: 'acc_kaspi', category: 'Жилье и аренда', amount: 50000, note: 'Аренда квартиры', date: '2026-10-02' }
-            ],
-            shifts: [
-                { id: 's_1', date: '2026-10-01', type: 'Night', earnings: 12000, note: 'Ночная смена' },
-                { id: 's_2', date: '2026-10-03', type: 'Late', earnings: 8000, note: 'Вечерняя подработка' },
-                { id: 's_3', date: '2026-10-04', type: 'Off', earnings: 0, note: 'Выходной' }
-            ],
-            wishlist: [
-                { id: 'w_1', title: 'MacBook Air M2', targetPrice: 550000, currentAmount: 150000, image: 'https://images.unsplash.com/photo-1517336714731-489689fd1ca8?auto=format&fit=crop&w=600&q=80' }
-            ],
+            accounts: [],
+            transactions: [],
+            shifts: [],
+            wishlist: [],
             analyticsPeriod: 'month',
-            currentCalendarDate: new Date(2026, 9, 1)
+            currentCalendarDate: new Date()
         };
 
         let catChart = null;
@@ -569,6 +537,7 @@
             renderShiftsCalendar();
             renderWishlist();
             renderAnalytics();
+            renderAIMind();
             populateDropdowns();
         }
 
@@ -599,13 +568,21 @@
 
         function calculateTotalBalance() {
             const total = state.accounts.reduce((sum, a) => sum + Number(a.balance), 0);
-            document.getElementById('total-balance-display').innerText = formatMoney(total);
+            const el = document.getElementById('total-balance-display');
+            if (el) el.innerText = formatMoney(total);
         }
 
         function renderAccounts() {
             const dash = document.getElementById('dash-accounts-grid');
             const full = document.getElementById('full-accounts-grid');
+            if (!dash || !full) return;
             dash.innerHTML = ''; full.innerHTML = '';
+
+            if (state.accounts.length === 0) {
+                dash.innerHTML = `<p class="text-xs text-slate-400 col-span-full">Нет счетов. Создайте первый счет во вкладке «Мои счета».</p>`;
+                full.innerHTML = `<p class="text-xs text-slate-400 col-span-full">У вас пока нет счетов. Нажмите «Добавить Счет» выше.</p>`;
+                return;
+            }
 
             state.accounts.forEach(acc => {
                 const html = `
@@ -618,8 +595,8 @@
                             <div class="w-8 h-8 rounded-full bg-white/20 flex items-center justify-center"><i class="fa-solid ${acc.icon || 'fa-wallet'} text-xs"></i></div>
                         </div>
                         <div class="flex justify-between items-center z-10 pt-4 border-t border-white/10 text-xs">
-                            <span class="text-white/70 font-mono">**** ${acc.id.slice(-4)}</span>
-                            <button onclick="deleteAccount('${acc.id}')" class="text-white/60 hover:text-white cursor-pointer"><i class="fa-solid fa-trash"></i></button>
+                            <span class="text-white/70 font-mono">ID: ${acc.id.slice(-4)}</span>
+                            <button onclick="deleteAccount('${acc.id}')" class="text-white/60 hover:text-white cursor-pointer" title="Удалить счет"><i class="fa-solid fa-trash"></i></button>
                         </div>
                     </div>
                 `;
@@ -631,6 +608,10 @@
             const sel = document.getElementById('trans-account-select');
             if (sel) {
                 sel.innerHTML = '';
+                if (state.accounts.length === 0) {
+                    sel.innerHTML = `<option value="">Сначала создайте счет!</option>`;
+                    return;
+                }
                 state.accounts.forEach(acc => {
                     sel.innerHTML += `<option value="${acc.id}">${acc.name} (${formatMoney(acc.balance)})</option>`;
                 });
@@ -640,10 +621,19 @@
         function renderTransactions() {
             const recent = document.getElementById('recent-transactions-list');
             const all = document.getElementById('all-transactions-list');
+            if (!recent || !all) return;
             recent.innerHTML = ''; all.innerHTML = '';
 
             let incTotal = 0, expTotal = 0;
             const sorted = [...state.transactions].sort((a,b) => new Date(b.date) - new Date(a.date));
+
+            if (sorted.length === 0) {
+                recent.innerHTML = `<div class="p-4 text-xs text-slate-400 text-center">Нет недавних операций</div>`;
+                all.innerHTML = `<div class="p-4 text-xs text-slate-400 text-center">История операций пуста</div>`;
+                document.getElementById('dash-income-total').innerText = '+0 ' + state.currency;
+                document.getElementById('dash-expense-total').innerText = '-0 ' + state.currency;
+                return;
+            }
 
             sorted.forEach(t => {
                 if (t.type === 'income') incTotal += Number(t.amount);
@@ -652,7 +642,7 @@
                 const acc = state.accounts.find(a => a.id === t.accountId);
                 const isInc = t.type === 'income';
 
-                const html = `
+                const itemHtml = `
                     <div class="p-4 flex items-center justify-between hover:bg-slate-50 dark:hover:bg-darkbg/50">
                         <div class="flex items-center gap-3">
                             <div class="w-9 h-9 rounded-xl ${isInc ? 'bg-emerald-500/10 text-emerald-500' : 'bg-brand-500/10 text-brand-500'} flex items-center justify-center font-bold text-xs">
@@ -660,13 +650,16 @@
                             </div>
                             <div>
                                 <p class="text-xs font-bold">${t.note || t.category}</p>
-                                <p class="text-[10px] text-slate-400">${acc ? acc.name : ''} • ${t.date}</p>
+                                <p class="text-[10px] text-slate-400">${acc ? acc.name : 'Счет удален'} • ${t.date}</p>
                             </div>
                         </div>
-                        <span class="text-xs font-extrabold ${isInc ? 'text-emerald-500' : 'text-brand-500'}">${isInc ? '+' : '-'}${formatMoney(t.amount)}</span>
+                        <div class="flex items-center gap-3">
+                            <span class="text-xs font-extrabold ${isInc ? 'text-emerald-500' : 'text-brand-500'}">${isInc ? '+' : '-'}${formatMoney(t.amount)}</span>
+                            <button onclick="deleteTransaction('${t.id}')" class="text-slate-400 hover:text-brand-500 cursor-pointer" title="Удалить транзакцию"><i class="fa-solid fa-trash text-xs"></i></button>
+                        </div>
                     </div>
                 `;
-                all.innerHTML += html;
+                all.innerHTML += itemHtml;
             });
 
             sorted.slice(0, 5).forEach(t => {
@@ -683,7 +676,23 @@
             document.getElementById('dash-expense-total').innerText = '-' + formatMoney(expTotal);
         }
 
-        /* CALENDAR & SHIFTS */
+        function deleteTransaction(id) {
+            const idx = state.transactions.findIndex(t => t.id === id);
+            if (idx === -1) return;
+            const t = state.transactions[idx];
+
+            const acc = state.accounts.find(a => a.id === t.accountId);
+            if (acc) {
+                if (t.type === 'expense') acc.balance += Number(t.amount);
+                else acc.balance -= Number(t.amount);
+            }
+
+            state.transactions.splice(idx, 1);
+            saveState();
+            showToast('Транзакция удалена');
+        }
+
+        /* КАЛЕНДАРЬ СМЕН */
         function renderShiftsCalendar() {
             const grid = document.getElementById('calendar-grid-days');
             const logList = document.getElementById('shifts-log-list');
@@ -703,6 +712,10 @@
             let shiftEarningsTotal = 0;
             let offCount = 0;
 
+            if (state.shifts.length === 0) {
+                logList.innerHTML = `<div class="p-4 text-xs text-slate-400 text-center">Журнал смен пуст</div>`;
+            }
+
             state.shifts.forEach(s => {
                 shiftCount++;
                 if (s.earnings) shiftEarningsTotal += Number(s.earnings);
@@ -714,7 +727,10 @@
                             <span class="px-2.5 py-1 rounded-lg font-bold text-[10px] bg-brand-500/10 text-brand-500">${s.type}</span>
                             <div><b>${s.note || 'Смена'}</b><p class="text-slate-400 text-[10px]">${s.date}</p></div>
                         </div>
-                        <span class="font-extrabold text-emerald-500">${s.earnings ? '+' + formatMoney(s.earnings) : '—'}</span>
+                        <div class="flex items-center gap-3">
+                            <span class="font-extrabold text-emerald-500">${s.earnings ? '+' + formatMoney(s.earnings) : '—'}</span>
+                            <button onclick="deleteShift('${s.id}')" class="text-slate-400 hover:text-brand-500 cursor-pointer" title="Удалить смену"><i class="fa-solid fa-trash text-xs"></i></button>
+                        </div>
                     </div>
                 `;
             });
@@ -752,6 +768,12 @@
             }
         }
 
+        function deleteShift(id) {
+            state.shifts = state.shifts.filter(s => s.id !== id);
+            saveState();
+            showToast('Смена удалена из журнала');
+        }
+
         function handleSaveShift(e) {
             e.preventDefault();
             const date = document.getElementById('shift-date-input').value;
@@ -760,10 +782,9 @@
             const note = document.getElementById('shift-note-input').value;
 
             state.shifts.push({ id: 's_' + Date.now(), date, type, earnings, note });
-
             saveState();
             closeModal('modal-shift');
-            showToast('Смена успешно записана в календарь!');
+            showToast('Смена записана в календарь!');
             e.target.reset();
         }
 
@@ -779,16 +800,22 @@
             grid.innerHTML = '';
             document.getElementById('dash-wishlist-count').innerText = state.wishlist.length + ' целей';
 
+            if (state.wishlist.length === 0) {
+                grid.innerHTML = `<p class="text-xs text-slate-400 col-span-full">Вишлист пуст. Добавьте свою первую цель.</p>`;
+                return;
+            }
+
             state.wishlist.forEach(w => {
                 const pct = Math.min(100, Math.round((w.currentAmount / w.targetPrice) * 100));
                 grid.innerHTML += `
                     <div class="bg-white dark:bg-darkcard rounded-2xl border border-slate-200 dark:border-darkborder overflow-hidden shadow-sm flex flex-col justify-between">
                         <div class="h-40 bg-slate-100 dark:bg-darkbg relative">
                             <img src="${w.image}" class="w-full h-full object-cover">
+                            <button onclick="deleteWishlist('${w.id}')" class="absolute top-3 right-3 w-8 h-8 rounded-full bg-black/60 text-white hover:bg-brand-500 flex items-center justify-center cursor-pointer" title="Удалить цель"><i class="fa-solid fa-trash text-xs"></i></button>
                         </div>
                         <div class="p-5 space-y-3">
                             <h3 class="font-bold text-base">${w.title}</h3>
-                            <div class="text-xs text-slate-400">Накоплено: <b class="text-white">${formatMoney(w.currentAmount)}</b> из ${formatMoney(w.targetPrice)}</div>
+                            <div class="text-xs text-slate-400">Стоимость: <b class="text-white">${formatMoney(w.targetPrice)}</b></div>
                             <div class="w-full h-2 bg-slate-100 dark:bg-darkbg rounded-full overflow-hidden">
                                 <div class="bg-brand-500 h-full rounded-full" style="width: ${pct}%"></div>
                             </div>
@@ -796,6 +823,12 @@
                     </div>
                 `;
             });
+        }
+
+        function deleteWishlist(id) {
+            state.wishlist = state.wishlist.filter(w => w.id !== id);
+            saveState();
+            showToast('Цель удалена из вишлиста');
         }
 
         function handleSaveWishlist(e) {
@@ -813,12 +846,31 @@
             e.target.reset();
         }
 
-        /* ANALYTICS */
+        /* ANALYTICS WITH PERIOD FILTER */
         function renderAnalytics() {
+            const period = state.analyticsPeriod;
+            const now = new Date();
+
+            let filteredTransactions = state.transactions.filter(t => {
+                const tDate = new Date(t.date);
+                if (period === 'day') {
+                    return tDate.toDateString() === now.toDateString();
+                } else if (period === 'week') {
+                    const diffTime = Math.abs(now - tDate);
+                    const diffDays = diffTime / (1000 * 60 * 60 * 24);
+                    return diffDays <= 7;
+                } else if (period === 'month') {
+                    return tDate.getMonth() === now.getMonth() && tDate.getFullYear() === now.getFullYear();
+                } else if (period === 'year') {
+                    return tDate.getFullYear() === now.getFullYear();
+                }
+                return true;
+            });
+
             let inc = 0, exp = 0;
             const cats = {};
 
-            state.transactions.forEach(t => {
+            filteredTransactions.forEach(t => {
                 if (t.type === 'income') inc += Number(t.amount);
                 else {
                     exp += Number(t.amount);
@@ -858,7 +910,36 @@
 
         function setAnalyticsPeriod(p) {
             state.analyticsPeriod = p;
+            document.querySelectorAll('.period-btn').forEach(btn => {
+                btn.className = 'period-btn px-3 py-1.5 text-xs font-bold rounded-lg text-slate-400 cursor-pointer';
+            });
+            document.getElementById(`period-${p}`).className = 'period-btn px-3 py-1.5 text-xs font-bold bg-brand-500 text-white rounded-lg cursor-pointer';
             renderAnalytics();
+        }
+
+        /* ИИ СОВЕТНИК */
+        function renderAIMind() {
+            const adviceBox = document.getElementById('ai-advice-container');
+            if (!adviceBox) return;
+
+            let totalInc = 0, totalExp = 0;
+            state.transactions.forEach(t => {
+                if (t.type === 'income') totalInc += Number(t.amount);
+                else totalExp += Number(t.amount);
+            });
+
+            if (state.transactions.length === 0) {
+                adviceBox.innerHTML = `<p>💡 <b>Совет ИИ:</b> У вас пока нет записанных операций. Добавьте свои доходы и расходы, и искусственный интеллект проанализирует ваш финансовый баланс, дав персональные рекомендации по накоплениям.</p>`;
+                return;
+            }
+
+            let advice = `<p>🤖 <b>Аналитический отчет ИИ MuMind:</b></p>`;
+            if (totalExp > totalInc) {
+                advice += `<p class="text-brand-500 font-semibold mt-2">⚠️ Внимание: Ваши расходы (${formatMoney(totalExp)}) превышают доходы (${formatMoney(totalInc)}). Рекомендуется пересмотреть категории второстепенных трат.</p>`;
+            } else {
+                advice += `<p class="text-emerald-500 font-semibold mt-2">✅ Отличная финансовая дисциплина! Доходы покрывают расходы, вы находитесь в плюсе на ${formatMoney(totalInc - totalExp)}. Часть средств советуем отложить в вишлист.</p>`;
+            }
+            adviceBox.innerHTML = advice;
         }
 
         /* TRANSACTIONS & ACCOUNTS */
@@ -872,7 +953,7 @@
             const date = document.getElementById('trans-date-input').value;
 
             const acc = state.accounts.find(a => a.id === accountId);
-            if (!acc) return;
+            if (!acc) { showToast('Сначала выберите или создайте счет!', 'error'); return; }
 
             if (type === 'expense') acc.balance -= amount;
             else acc.balance += amount;
@@ -900,7 +981,6 @@
         }
 
         function deleteAccount(id) {
-            if (state.accounts.length <= 1) { showToast('Нельзя удалить единственный счет!', 'error'); return; }
             state.accounts = state.accounts.filter(a => a.id !== id);
             saveState();
             showToast('Счет удален');
@@ -942,10 +1022,10 @@
             document.getElementById('user-display-name').innerText = state.user.name && state.user.name !== 'Гость' ? state.user.name : 'Войти';
         }
 
-        /* ИСПРАВЛЕННАЯ ФУНКЦИЯ ДЛЯ КНОПКИ ОПЕРАЦИЯ */
         function openTransactionModal() {
             const modal = document.getElementById('modal-transaction');
             if (modal) {
+                populateDropdowns();
                 modal.classList.remove('hidden');
                 modal.classList.add('flex');
             }
@@ -969,11 +1049,11 @@
 
         function switchTab(id) {
             document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
-            document.querySelectorAll('.tab-btn').forEach(btn => btn.className = 'tab-btn px-4 py-2 text-sm font-semibold rounded-lg text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-darkbg whitespace-nowrap');
+            document.querySelectorAll('.tab-btn').forEach(btn => btn.className = 'tab-btn px-4 py-2 text-sm font-semibold rounded-lg text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-darkbg whitespace-nowrap cursor-pointer');
             const targetView = document.getElementById(`view-${id}`);
             const targetBtn = document.getElementById(`tab-btn-${id}`);
             if (targetView) targetView.classList.remove('hidden');
-            if (targetBtn) targetBtn.className = 'tab-btn px-4 py-2 text-sm font-semibold rounded-lg text-brand-500 bg-brand-500/10 whitespace-nowrap';
+            if (targetBtn) targetBtn.className = 'tab-btn px-4 py-2 text-sm font-semibold rounded-lg text-brand-500 bg-brand-500/10 whitespace-nowrap cursor-pointer';
         }
 
         function showToast(msg, type='success') {
