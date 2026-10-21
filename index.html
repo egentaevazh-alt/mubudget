@@ -1,11 +1,16 @@
 <!DOCTYPE html>
-<html lang="ru" class="dark">
+<html lang="ru">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>MuBudget — Управление личными финансами</title>
-    <!-- Tailwind CSS CDN -->
+    <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- FontAwesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
     <script>
         tailwind.config = {
             darkMode: 'class',
@@ -13,1057 +18,1580 @@
                 extend: {
                     colors: {
                         brand: {
-                            50: '#fff5f5',
-                            100: '#fed7d7',
-                            500: '#e53e3e',
-                            600: '#e53e3e',
-                            700: '#c53030',
-                            800: '#9b2c2c',
-                            glow: '#ff2e55'
-                        },
-                        darkbg: '#0f0f11',
-                        darkcard: '#18181c',
-                        darkborder: '#2a2a30'
+                            50: '#fff1f2',
+                            100: '#ffe4e6',
+                            500: '#f43f5e',
+                            600: '#e11d48',
+                            700: '#be123c',
+                            800: '#9f1239',
+                            900: '#881337',
+                        }
                     }
                 }
             }
         }
     </script>
-    <!-- Font Awesome Icons -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <!-- Chart.js for Analytics -->
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
-        body {
-            font-family: 'Inter', sans-serif;
-            transition: background-color 0.3s ease, color 0.3s ease;
-        }
-        .custom-scrollbar::-webkit-scrollbar {
+        ::-webkit-scrollbar {
             width: 6px;
             height: 6px;
         }
-        .custom-scrollbar::-webkit-scrollbar-track {
-            background: transparent;
+        ::-webkit-scrollbar-track {
+            background: rgba(0,0,0,0.05);
         }
-        .custom-scrollbar::-webkit-scrollbar-thumb {
-            background: rgba(229, 62, 62, 0.3);
-            border-radius: 4px;
+        ::-webkit-scrollbar-thumb {
+            background: rgba(225, 29, 72, 0.4);
+            border-radius: 3px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: rgba(225, 29, 72, 0.7);
+        }
+        .glass-card {
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
         }
     </style>
 </head>
-<body class="bg-slate-50 text-slate-900 dark:bg-darkbg dark:text-slate-100 min-h-screen flex flex-col antialiased">
+<body class="bg-slate-50 text-slate-900 dark:bg-slate-950 dark:text-slate-100 min-h-screen transition-colors duration-200 font-sans antialiased pb-20 md:pb-0">
 
-    <header class="sticky top-0 z-40 bg-white/80 dark:bg-darkcard/80 backdrop-blur-md border-b border-slate-200 dark:border-darkborder transition-colors">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
-            <!-- Brand Logo -->
-            <div class="flex items-center gap-3 cursor-pointer" onclick="switchTab('dashboard')">
-                <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-brand-600 to-red-500 flex items-center justify-center text-white font-black text-xl shadow-lg shadow-brand-500/30">
-                    Mu
-                </div>
-                <div>
-                    <span class="text-xl font-extrabold tracking-tight">Mu<span class="text-brand-500">Budget</span></span>
-                    <span class="hidden sm:inline-block text-xs px-2 py-0.5 ml-2 bg-brand-500/10 text-brand-500 border border-brand-500/20 rounded-full font-medium">Safe Tracker</span>
+    <!-- Toast Notifications Banner -->
+    <div id="toastContainer" class="fixed top-4 right-4 z-50 flex flex-col gap-2 max-w-sm w-full px-4 pointer-events-none"></div>
+
+    <!-- Layout Wrapper -->
+    <div class="flex h-screen overflow-hidden">
+
+        <!-- Sidebar (Desktop) -->
+        <aside class="hidden md:flex flex-col w-64 bg-white dark:bg-slate-900 border-r border-slate-200 dark:border-slate-800 z-20">
+            <div class="p-5 flex items-center justify-between border-b border-slate-200 dark:border-slate-800">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-brand-600 to-rose-400 flex items-center justify-center text-white text-xl font-bold shadow-lg shadow-brand-500/30">
+                        M
+                    </div>
+                    <div>
+                        <h1 class="font-bold text-lg leading-tight tracking-wide text-brand-600 dark:text-rose-500">MuBudget</h1>
+                        <span class="text-xs text-slate-400">Финансовый трекер</span>
+                    </div>
                 </div>
             </div>
 
-            <!-- Header Right Controls -->
-            <div class="flex items-center gap-3">
-                <select id="currency-select" onchange="changeCurrency(this.value)" class="bg-slate-100 dark:bg-darkbg text-slate-800 dark:text-slate-200 text-xs font-semibold py-1.5 px-2.5 rounded-lg border border-slate-200 dark:border-darkborder focus:outline-none focus:border-brand-500 cursor-pointer">
-                    <option value="₸">₸ (KZT)</option>
-                    <option value="$">$ (USD)</option>
-                    <option value="€">€ (EUR)</option>
-                    <option value="₽">₽ (RUB)</option>
-                </select>
-
-                <button onclick="toggleTheme()" class="p-2 text-slate-600 dark:text-slate-300 hover:text-brand-500 rounded-lg hover:bg-slate-100 dark:hover:bg-darkbg transition-colors cursor-pointer" title="Переключить тему">
-                    <i id="theme-icon" class="fa-solid fa-moon text-lg"></i>
+            <!-- Navigation Links -->
+            <nav class="flex-1 px-3 py-4 space-y-1 overflow-y-auto">
+                <button onclick="switchTab('overview')" class="nav-btn w-full flex items-center gap-3 px-4 py-3 rounded-xl font-medium transition text-brand-600 bg-brand-50 dark:bg-brand-950/40 dark:text-rose-400" data-tab="overview">
+                    <i class="fa-solid font-bold fa-chart-pie w-5"></i> Обзор
                 </button>
+                <button onclick="switchTab('accounts')" class="nav-btn w-full flex items-center gap-3 px-4 py-3 rounded-xl font-medium text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition" data-tab="accounts">
+                    <i class="fa-solid fa-wallet w-5"></i> Счета
+                </button>
+                <button onclick="switchTab('wishlist')" class="nav-btn w-full flex items-center gap-3 px-4 py-3 rounded-xl font-medium text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition" data-tab="wishlist">
+                    <i class="fa-solid fa-bullseye w-5"></i> Вишлист и Накопления
+                </button>
+                <button onclick="switchTab('analytics')" class="nav-btn w-full flex items-center gap-3 px-4 py-3 rounded-xl font-medium text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition" data-tab="analytics">
+                    <i class="fa-solid fa-chart-line w-5"></i> Аналитика
+                </button>
+                <button onclick="switchTab('shifts')" class="nav-btn w-full flex items-center gap-3 px-4 py-3 rounded-xl font-medium text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition" data-tab="shifts">
+                    <i class="fa-solid fa-calendar-days w-5"></i> Календарь смен
+                </button>
+                <button id="navDebtsBtn" onclick="switchTab('debts')" class="nav-btn w-full flex items-center gap-3 px-4 py-3 rounded-xl font-medium text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition" data-tab="debts">
+                    <i class="fa-solid fa-hand-holding-dollar w-5"></i> Долги и Рассрочки
+                </button>
+                <button onclick="switchTab('settings')" class="nav-btn w-full flex items-center gap-3 px-4 py-3 rounded-xl font-medium text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition" data-tab="settings">
+                    <i class="fa-solid fa-gear w-5"></i> Настройки
+                </button>
+            </nav>
 
-                <div class="flex items-center pl-2 border-l border-slate-200 dark:border-darkborder">
-                    <button onclick="openAuthModal()" id="auth-btn" class="flex items-center gap-2 text-sm font-semibold text-slate-700 dark:text-slate-200 hover:text-brand-500 transition-colors cursor-pointer">
-                        <div class="w-8 h-8 rounded-full bg-slate-200 dark:bg-darkbg flex items-center justify-center text-slate-600 dark:text-slate-300">
-                            <i class="fa-solid fa-user text-xs"></i>
+            <!-- User Quick Status Card -->
+            <div class="p-4 border-t border-slate-200 dark:border-slate-800">
+                <div class="p-3 bg-slate-100 dark:bg-slate-800/60 rounded-xl flex items-center gap-3">
+                    <div id="userAvatar" class="w-9 h-9 rounded-full bg-slate-300 dark:bg-slate-700 flex items-center justify-center font-bold text-slate-700 dark:text-slate-200">
+                        U
+                    </div>
+                    <div class="overflow-hidden">
+                        <p id="userNameDisplay" class="text-sm font-semibold truncate">Пользователь</p>
+                        <p id="userStatusDisplay" class="text-xs text-slate-500 dark:text-slate-400">Локальный режим</p>
+                    </div>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Main Content Area -->
+        <main class="flex-1 flex flex-col h-full overflow-y-auto">
+
+            <!-- Mobile Top Header -->
+            <header class="md:hidden flex items-center justify-between p-4 bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 sticky top-0 z-10">
+                <div class="flex items-center gap-3">
+                    <div class="w-9 h-9 rounded-xl bg-gradient-to-tr from-brand-600 to-rose-400 flex items-center justify-center text-white text-lg font-bold shadow-md">
+                        M
+                    </div>
+                    <h1 class="font-bold text-lg text-brand-600 dark:text-rose-500">MuBudget</h1>
+                </div>
+                <button onclick="switchTab('settings')" class="p-2 text-slate-600 dark:text-slate-300">
+                    <i class="fa-solid fa-gear text-lg"></i>
+                </button>
+            </header>
+
+            <!-- Notifications Banner -->
+            <div id="notificationAlertBanner" class="hidden m-4 mb-0 p-4 bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800/60 rounded-2xl flex items-start gap-3">
+                <i class="fa-solid fa-bell text-amber-600 dark:text-amber-400 text-lg mt-0.5"></i>
+                <div class="flex-1">
+                    <h4 class="font-semibold text-sm text-amber-900 dark:text-amber-200">Напоминание</h4>
+                    <p id="notificationAlertText" class="text-xs text-amber-700 dark:text-amber-300 mt-1">Не забудьте внести сегодняшний доход или расход!</p>
+                </div>
+                <button onclick="dismissNotificationBanner()" class="text-amber-500 hover:text-amber-700 dark:hover:text-amber-200">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+
+            <div class="p-4 md:p-8 max-w-6xl w-full mx-auto space-y-6">
+
+                <!-- 1. TAB: OVERVIEW -->
+                <section id="tab-overview" class="tab-content space-y-6">
+                    <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
+                        <div class="bg-gradient-to-br from-brand-600 to-rose-700 text-white p-5 rounded-3xl shadow-lg shadow-brand-600/20 flex flex-col justify-between">
+                            <span class="text-xs uppercase tracking-wider font-semibold opacity-80">Общий Баланс</span>
+                            <div class="mt-3">
+                                <h3 id="statTotalBalance" class="text-2xl lg:text-3xl font-extrabold tracking-tight">0 ₸</h3>
+                                <p class="text-xs opacity-75 mt-1">Карты + Наличные</p>
+                            </div>
                         </div>
-                        <span id="user-display-name" class="hidden md:inline">Войти</span>
-                    </button>
-                </div>
-            </div>
-        </div>
-    </header>
 
-    <!-- Navigation Tabs Bar -->
-    <nav class="bg-white dark:bg-darkcard border-b border-slate-200 dark:border-darkborder transition-colors">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="flex space-x-1 sm:space-x-8 overflow-x-auto custom-scrollbar py-2">
-                <button id="tab-btn-dashboard" onclick="switchTab('dashboard')" class="tab-btn px-4 py-2 text-sm font-semibold rounded-lg text-brand-500 bg-brand-500/10 whitespace-nowrap transition-all cursor-pointer">
-                    <i class="fa-solid fa-chart-pie mr-2"></i>Обзор
-                </button>
-                <button id="tab-btn-accounts" onclick="switchTab('accounts')" class="tab-btn px-4 py-2 text-sm font-semibold rounded-lg text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-darkbg whitespace-nowrap transition-all cursor-pointer">
-                    <i class="fa-solid fa-wallet mr-2"></i>Мои счета
-                </button>
-                <button id="tab-btn-analytics" onclick="switchTab('analytics')" class="tab-btn px-4 py-2 text-sm font-semibold rounded-lg text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-darkbg whitespace-nowrap transition-all cursor-pointer">
-                    <i class="fa-solid fa-chart-line mr-2"></i>Аналитика
-                </button>
-                <button id="tab-btn-wishlist" onclick="switchTab('wishlist')" class="tab-btn px-4 py-2 text-sm font-semibold rounded-lg text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-darkbg whitespace-nowrap transition-all cursor-pointer">
-                    <i class="fa-solid fa-heart mr-2"></i>Вишлист & Цели
-                </button>
-                <button id="tab-btn-calendar" onclick="switchTab('calendar')" class="tab-btn px-4 py-2 text-sm font-semibold rounded-lg text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-darkbg whitespace-nowrap transition-all cursor-pointer">
-                    <i class="fa-solid fa-calendar-days mr-2 text-brand-500"></i>Календарь смен
-                </button>
-                <button id="tab-btn-aimind" onclick="switchTab('aimind')" class="tab-btn px-4 py-2 text-sm font-semibold rounded-lg text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-darkbg whitespace-nowrap transition-all cursor-pointer">
-                    <i class="fa-solid fa-robot mr-2 text-brand-500"></i>ИИ MuMind
-                </button>
+                        <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-5 rounded-3xl shadow-sm flex flex-col justify-between">
+                            <div class="flex items-center justify-between">
+                                <span class="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Депозит</span>
+                                <div class="w-8 h-8 rounded-full bg-emerald-100 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400 flex items-center justify-center">
+                                    <i class="fa-solid fa-vault text-sm"></i>
+                                </div>
+                            </div>
+                            <div class="mt-3">
+                                <h3 id="statDepositBalance" class="text-2xl font-extrabold text-slate-900 dark:text-white">0 ₸</h3>
+                                <p class="text-xs text-emerald-600 dark:text-emerald-400 mt-1">Накопления под %</p>
+                            </div>
+                        </div>
+
+                        <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-5 rounded-3xl shadow-sm flex flex-col justify-between">
+                            <div class="flex items-center justify-between">
+                                <span class="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Доходы (Месяц)</span>
+                                <div class="w-8 h-8 rounded-full bg-teal-100 dark:bg-teal-950/60 text-teal-600 dark:text-teal-400 flex items-center justify-center">
+                                    <i class="fa-solid fa-arrow-down-left text-sm"></i>
+                                </div>
+                            </div>
+                            <div class="mt-3">
+                                <h3 id="statMonthlyIncome" class="text-2xl font-extrabold text-teal-600 dark:text-teal-400">0 ₸</h3>
+                                <p class="text-xs text-slate-400 mt-1">Все поступления</p>
+                            </div>
+                        </div>
+
+                        <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-5 rounded-3xl shadow-sm flex flex-col justify-between">
+                            <div class="flex items-center justify-between">
+                                <span class="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Расходы (Месяц)</span>
+                                <div class="w-8 h-8 rounded-full bg-rose-100 dark:bg-rose-950/60 text-rose-600 dark:text-rose-400 flex items-center justify-center">
+                                    <i class="fa-solid fa-arrow-up-right text-sm"></i>
+                                </div>
+                            </div>
+                            <div class="mt-3">
+                                <h3 id="statMonthlyExpense" class="text-2xl font-extrabold text-rose-600 dark:text-rose-400">0 ₸</h3>
+                                <p class="text-xs text-slate-400 mt-1">Все списывания</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Dynamic Budget Widget -->
+                    <div class="bg-gradient-to-br from-slate-900 to-slate-800 dark:from-slate-900 dark:to-slate-950 text-white p-6 rounded-3xl shadow-xl border border-slate-700/50 relative overflow-hidden">
+                        <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-6 relative z-10">
+                            <div class="space-y-2">
+                                <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-brand-500/20 text-brand-300 text-xs font-semibold">
+                                    <i class="fa-solid fa-bolt text-yellow-400"></i> Динамический лимит расходов
+                                </div>
+                                <h2 class="text-xs uppercase tracking-wider text-slate-400 font-semibold">Можно потратить сегодня</h2>
+                                <div class="flex items-baseline gap-3">
+                                    <span id="dailySpendLimitDisplay" class="text-4xl lg:text-5xl font-black text-rose-400 tracking-tight">0 ₸</span>
+                                    <span id="dailyLimitStatusSub" class="text-xs text-slate-400">из дневной нормы</span>
+                                </div>
+                                <p id="dailyLimitProgressText" class="text-xs text-slate-300">Сегодня потрачено: <span class="font-bold text-white" id="todaySpentVal">0 ₸</span></p>
+                            </div>
+
+                            <div class="bg-white/10 p-4 rounded-2xl backdrop-blur-md border border-white/10 flex flex-col gap-3 min-w-[280px]">
+                                <label class="text-xs font-medium text-slate-300">Настройка бюджета / Лимита:</label>
+                                <div class="grid grid-cols-2 gap-2">
+                                    <select id="budgetPeriodSelect" onchange="updateBudgetLimits()" class="bg-slate-800 text-white text-xs px-3 py-2 rounded-xl border border-slate-700 focus:outline-none focus:border-brand-500">
+                                        <option value="day">На день</option>
+                                        <option value="week">На неделю</option>
+                                        <option value="month" selected>На месяц</option>
+                                    </select>
+                                    <input type="number" id="budgetLimitInput" oninput="updateBudgetLimits()" placeholder="Сумма лимита" class="bg-slate-800 text-white text-xs px-3 py-2 rounded-xl border border-slate-700 focus:outline-none focus:border-brand-500 w-full" />
+                                </div>
+                                <div class="w-full bg-slate-700/60 rounded-full h-2 overflow-hidden">
+                                    <div id="budgetProgressBar" class="bg-gradient-to-r from-emerald-400 to-rose-500 h-2 rounded-full transition-all duration-300" style="width: 0%"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Action Bar -->
+                    <div class="flex gap-4">
+                        <button onclick="openTransactionModal('income')" class="flex-1 py-3.5 px-4 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold rounded-2xl shadow-md transition flex items-center justify-center gap-2">
+                            <i class="fa-solid fa-plus-circle text-lg"></i> Добавить Доход
+                        </button>
+                        <button onclick="openTransactionModal('expense')" class="flex-1 py-3.5 px-4 bg-brand-600 hover:bg-brand-700 text-white font-semibold rounded-2xl shadow-md shadow-brand-600/20 transition flex items-center justify-center gap-2">
+                            <i class="fa-solid fa-minus-circle text-lg"></i> Добавить Расход
+                        </button>
+                    </div>
+
+                    <!-- Recent Transactions & Accounts Grid -->
+                    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                        <div class="lg:col-span-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-6 space-y-4">
+                            <div class="flex items-center justify-between">
+                                <h3 class="font-bold text-lg">Последние операции</h3>
+                                <button onclick="switchTab('analytics')" class="text-xs text-brand-600 dark:text-rose-400 font-semibold hover:underline">Все транзакции &rarr;</button>
+                            </div>
+                            <div id="recentTransactionsList" class="space-y-3">
+                                <p class="text-sm text-slate-400 py-4 text-center">История пуста. Добавьте первую операцию!</p>
+                            </div>
+                        </div>
+
+                        <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-6 space-y-4">
+                            <div class="flex items-center justify-between">
+                                <h3 class="font-bold text-lg">Мои Счета</h3>
+                                <button onclick="switchTab('accounts')" class="text-xs text-brand-600 dark:text-rose-400 font-semibold hover:underline">Управление</button>
+                            </div>
+                            <div id="miniAccountsList" class="space-y-3"></div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- 2. TAB: ACCOUNTS -->
+                <section id="tab-accounts" class="tab-content hidden space-y-6">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <h2 class="text-2xl font-bold">Счета</h2>
+                            <p class="text-sm text-slate-500 dark:text-slate-400">Управляйте вашими картами, наличными и депозитами</p>
+                        </div>
+                        <button onclick="openAccountModal()" class="px-4 py-2.5 bg-brand-600 hover:bg-brand-700 text-white text-sm font-semibold rounded-xl shadow transition flex items-center gap-2">
+                            <i class="fa-solid fa-plus"></i> Новый Счет
+                        </button>
+                    </div>
+                    <div id="accountsGrid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4"></div>
+                </section>
+
+                <!-- 3. TAB: WISHLIST & GOALS -->
+                <section id="tab-wishlist" class="tab-content hidden space-y-6">
+                    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white dark:bg-slate-900 p-6 rounded-3xl border border-slate-200 dark:border-slate-800">
+                        <div>
+                            <h2 class="text-2xl font-bold">Вишлист и Цели накоплений</h2>
+                            <p class="text-sm text-slate-500 dark:text-slate-400">Откладывайте средства на ваши мечты</p>
+                        </div>
+                        <button onclick="openGoalModal()" class="px-5 py-3 bg-gradient-to-r from-brand-600 to-rose-500 hover:from-brand-700 hover:to-rose-600 text-white text-sm font-bold rounded-2xl shadow-lg shadow-brand-500/25 transition flex items-center gap-2">
+                            <i class="fa-solid fa-circle-plus text-base"></i> + Новая цель накоплений
+                        </button>
+                    </div>
+                    <div id="goalsGrid" class="grid grid-cols-1 md:grid-cols-2 gap-6"></div>
+                </section>
+
+                <!-- 4. TAB: ANALYTICS -->
+                <section id="tab-analytics" class="tab-content hidden space-y-6">
+                    <div>
+                        <h2 class="text-2xl font-bold">Аналитика и История</h2>
+                        <p class="text-sm text-slate-500 dark:text-slate-400">Наглядная статистика расходов и доходов</p>
+                    </div>
+                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                        <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-6 rounded-3xl">
+                            <h3 class="font-bold mb-4">Структура Расходов по Категориям</h3>
+                            <div class="max-w-xs mx-auto">
+                                <canvas id="expenseChart"></canvas>
+                            </div>
+                        </div>
+                        <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-6 rounded-3xl">
+                            <h3 class="font-bold mb-4">Полная история операций</h3>
+                            <div id="fullTransactionsList" class="space-y-3 max-h-96 overflow-y-auto pr-1"></div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- 5. TAB: SHIFT CALENDAR -->
+                <section id="tab-shifts" class="tab-content hidden space-y-6">
+                    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                        <div>
+                            <h2 class="text-2xl font-bold">Календарь смен и подработок</h2>
+                            <p class="text-xs text-slate-500 dark:text-slate-400">Журнал смен (с возможностью начисления дохода на счета)</p>
+                        </div>
+                        <button onclick="openShiftModal()" class="px-5 py-3 bg-rose-600 hover:bg-rose-700 text-white font-bold text-sm rounded-2xl shadow-lg shadow-rose-600/20 transition flex items-center justify-center gap-2">
+                            <i class="fa-solid fa-plus text-base"></i> Отметить смену
+                        </button>
+                    </div>
+
+                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                        <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-5 rounded-3xl">
+                            <span class="text-xs font-semibold text-slate-400 uppercase tracking-wider">Отработано смен</span>
+                            <h3 id="shiftStatCount" class="text-2xl font-extrabold text-rose-600 dark:text-rose-400 mt-1">0 смен</h3>
+                        </div>
+                        <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-5 rounded-3xl">
+                            <span class="text-xs font-semibold text-slate-400 uppercase tracking-wider">Заработано (в журнале)</span>
+                            <h3 id="shiftStatEarned" class="text-2xl font-extrabold text-emerald-600 dark:text-emerald-400 mt-1">0 ₸</h3>
+                        </div>
+                        <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-5 rounded-3xl">
+                            <span class="text-xs font-semibold text-slate-400 uppercase tracking-wider">Выходных / Отпуск</span>
+                            <h3 id="shiftStatOff" class="text-2xl font-extrabold text-blue-600 dark:text-blue-400 mt-1">0 дней</h3>
+                        </div>
+                    </div>
+
+                    <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-6 space-y-4 shadow-sm">
+                        <div class="flex items-center justify-between">
+                            <h3 id="calendarMonthYearDisplay" class="font-extrabold text-lg text-slate-800 dark:text-slate-100">октябрь 2026 г.</h3>
+                            <div class="flex items-center gap-2">
+                                <button onclick="changeCalendarMonth(-1)" class="w-8 h-8 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 flex items-center justify-center transition">
+                                    <i class="fa-solid fa-chevron-left text-xs"></i>
+                                </button>
+                                <button onclick="changeCalendarMonth(1)" class="w-8 h-8 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 flex items-center justify-center transition">
+                                    <i class="fa-solid fa-chevron-right text-xs"></i>
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="grid grid-cols-7 text-center font-bold text-xs text-slate-400 py-2 border-b border-slate-100 dark:border-slate-800">
+                            <div>Пн</div><div>Вт</div><div>Ср</div><div>Чт</div><div>Пт</div><div>Сб</div><div>Вс</div>
+                        </div>
+
+                        <div id="calendarDaysGrid" class="grid grid-cols-7 gap-1.5 md:gap-2"></div>
+                    </div>
+                </section>
+
+                <!-- 6. TAB: DEBTS AND INSTALMENTS -->
+                <section id="tab-debts" class="tab-content hidden space-y-6">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <h2 class="text-2xl font-bold">Долги и Рассрочки</h2>
+                            <p class="text-sm text-slate-500 dark:text-slate-400">Контроль Kaspi Red, кредитов и личных долгов</p>
+                        </div>
+                        <button onclick="openDebtModal()" class="px-4 py-2.5 bg-rose-600 hover:bg-rose-700 text-white text-sm font-semibold rounded-xl shadow transition flex items-center gap-2">
+                            <i class="fa-solid fa-plus"></i> Добавить долг
+                        </button>
+                    </div>
+
+                    <div id="debtsGrid" class="grid grid-cols-1 md:grid-cols-2 gap-4"></div>
+                </section>
+
+                <!-- 7. TAB: SETTINGS -->
+                <section id="tab-settings" class="tab-content hidden space-y-6">
+                    <div>
+                        <h2 class="text-2xl font-bold">Настройки</h2>
+                        <p class="text-sm text-slate-500 dark:text-slate-400">Персонализация приложения и параметров</p>
+                    </div>
+
+                    <div class="space-y-4 max-w-2xl">
+                        <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-6 rounded-3xl space-y-4">
+                            <h3 class="font-bold text-lg flex items-center gap-2">
+                                <i class="fa-solid fa-user-gear text-brand-600"></i> Аккаунт и Профиль
+                            </h3>
+                            <div class="flex items-center gap-4">
+                                <input type="text" id="settingUserName" placeholder="Ваше имя" class="bg-slate-100 dark:bg-slate-800 border-0 rounded-xl px-4 py-2.5 text-sm w-full focus:ring-2 focus:ring-brand-500" />
+                                <button onclick="saveUserProfile()" class="px-4 py-2.5 bg-brand-600 text-white font-medium text-sm rounded-xl hover:bg-brand-700">Сохранить</button>
+                            </div>
+                        </div>
+
+                        <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-6 rounded-3xl space-y-4">
+                            <h3 class="font-bold text-lg flex items-center gap-2">
+                                <i class="fa-solid fa-palette text-brand-600"></i> Внешний вид
+                            </h3>
+                            <div class="flex items-center justify-between">
+                                <div>
+                                    <p class="font-semibold text-sm">Тема оформления</p>
+                                    <p class="text-xs text-slate-500 dark:text-slate-400">Выберите подходящую цветовую гамму</p>
+                                </div>
+                                <div class="flex bg-slate-100 dark:bg-slate-800 p-1 rounded-xl">
+                                    <button onclick="setTheme('light')" id="themeBtnLight" class="px-3 py-1.5 text-xs font-semibold rounded-lg transition">Светлая</button>
+                                    <button onclick="setTheme('dark')" id="themeBtnDark" class="px-3 py-1.5 text-xs font-semibold rounded-lg transition">Темная</button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-6 rounded-3xl space-y-4">
+                            <div class="flex items-center justify-between">
+                                <div>
+                                    <h3 class="font-bold text-lg flex items-center gap-2">
+                                        <i class="fa-solid fa-hand-holding-dollar text-brand-600"></i> Раздел "Долги и Рассрочки"
+                                    </h3>
+                                    <p class="text-xs text-slate-500 dark:text-slate-400 mt-1">Отображать модуль долгов в главном меню</p>
+                                </div>
+                                <label class="relative inline-flex items-center cursor-pointer">
+                                    <input type="checkbox" id="toggleDebtsModule" onchange="toggleDebtsVisibility()" class="sr-only peer" checked>
+                                    <div class="w-11 h-6 bg-slate-300 peer-focus:outline-none rounded-full peer dark:bg-slate-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-brand-600"></div>
+                                </label>
+                            </div>
+                            <div id="debtModuleShortcut" class="pt-2 border-t border-slate-100 dark:border-slate-800">
+                                <button onclick="switchTab('debts')" class="text-xs text-brand-600 dark:text-rose-400 font-semibold hover:underline flex items-center gap-1">
+                                    Перейти к списку долгов <i class="fa-solid fa-arrow-right"></i>
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-6 rounded-3xl space-y-4">
+                            <h3 class="font-bold text-lg flex items-center gap-2">
+                                <i class="fa-solid fa-bell text-brand-600"></i> Уведомления и Напоминания
+                            </h3>
+                            <div class="space-y-3">
+                                <div class="flex items-center justify-between">
+                                    <div>
+                                        <p class="font-semibold text-sm">Утреннее напоминание</p>
+                                        <p class="text-xs text-slate-500 dark:text-slate-400">Напоминать каждое утро внести расходы и доходы</p>
+                                    </div>
+                                    <input type="checkbox" id="notifMorning" onchange="saveNotificationSettings()" class="w-5 h-5 text-brand-600 rounded focus:ring-brand-500" checked />
+                                </div>
+                                <div class="flex items-center justify-between pt-2 border-t border-slate-100 dark:border-slate-800">
+                                    <div>
+                                        <p class="font-semibold text-sm">Напоминание о долгах</p>
+                                        <p class="text-xs text-slate-500 dark:text-slate-400">Уведомлять о скором наступлении срока возврата долга</p>
+                                    </div>
+                                    <input type="checkbox" id="notifDebts" onchange="saveNotificationSettings()" class="w-5 h-5 text-brand-600 rounded focus:ring-brand-500" checked />
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="bg-gradient-to-br from-brand-900 to-rose-950 text-white p-6 rounded-3xl space-y-4 border border-rose-800/50">
+                            <div class="flex items-center gap-3">
+                                <div class="w-10 h-10 rounded-2xl bg-rose-500/20 flex items-center justify-center text-rose-300 text-xl">
+                                    <i class="fa-solid fa-brain"></i>
+                                </div>
+                                <div>
+                                    <h3 class="font-bold text-lg">ИИ-Помощник MuMind</h3>
+                                    <p class="text-xs text-rose-200">Ваш умный финансовый консультант</p>
+                                </div>
+                            </div>
+                            <p class="text-xs text-slate-300 leading-relaxed">
+                                ИИ-ассистент анализирует ваши привычки трат, подсказывает, как быстрее накопить на цели из вишлиста, и дает персональные рекомендации по экономии в Telegram-боте.
+                            </p>
+                            <a href="https://t.me/" target="_blank" class="inline-flex items-center justify-center gap-2 w-full py-3 bg-rose-600 hover:bg-rose-500 text-white text-sm font-bold rounded-xl transition shadow-lg shadow-rose-600/30">
+                                <i class="fa-brands fa-telegram text-lg"></i> Открыть Telegram-бота MuMind
+                            </a>
+                        </div>
+                    </div>
+                </section>
+
             </div>
-        </div>
+        </main>
+    </div>
+
+    <!-- Bottom Mobile Nav Bar -->
+    <nav class="md:hidden fixed bottom-0 left-0 right-0 bg-white dark:bg-slate-900 border-t border-slate-200 dark:border-slate-800 flex justify-around p-2 z-40">
+        <button onclick="switchTab('overview')" class="mobile-nav-btn flex flex-col items-center p-2 text-brand-600 dark:text-rose-400" data-tab="overview">
+            <i class="fa-solid fa-chart-pie text-lg"></i>
+            <span class="text-[10px] font-medium mt-0.5">Обзор</span>
+        </button>
+        <button onclick="switchTab('accounts')" class="mobile-nav-btn flex flex-col items-center p-2 text-slate-400" data-tab="accounts">
+            <i class="fa-solid fa-wallet text-lg"></i>
+            <span class="text-[10px] font-medium mt-0.5">Счета</span>
+        </button>
+        <button onclick="switchTab('wishlist')" class="mobile-nav-btn flex flex-col items-center p-2 text-slate-400" data-tab="wishlist">
+            <i class="fa-solid fa-bullseye text-lg"></i>
+            <span class="text-[10px] font-medium mt-0.5">Вишлист</span>
+        </button>
+        <button id="mobileDebtsBtn" onclick="switchTab('debts')" class="mobile-nav-btn flex flex-col items-center p-2 text-slate-400" data-tab="debts">
+            <i class="fa-solid fa-hand-holding-dollar text-lg"></i>
+            <span class="text-[10px] font-medium mt-0.5">Долги</span>
+        </button>
+        <button onclick="switchTab('settings')" class="mobile-nav-btn flex flex-col items-center p-2 text-slate-400" data-tab="settings">
+            <i class="fa-solid fa-gear text-lg"></i>
+            <span class="text-[10px] font-medium mt-0.5">Опции</span>
+        </button>
     </nav>
 
-    <!-- Main Dynamic Content Container -->
-    <main class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
-
-        <!-- TAB 1: DASHBOARD -->
-        <section id="view-dashboard" class="tab-content space-y-6">
-            <!-- Quick Transaction Floating Trigger Button & Total Balance (Only on Dashboard) -->
-            <div class="flex justify-between items-center bg-white dark:bg-darkcard p-4 rounded-2xl border border-slate-200 dark:border-darkborder shadow-sm">
+    <!-- MODAL: ADD / EDIT TRANSACTION -->
+    <div id="modalTransaction" class="fixed inset-0 bg-slate-950/60 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 w-full max-w-md rounded-3xl p-6 space-y-4 shadow-2xl">
+            <div class="flex items-center justify-between">
+                <h3 id="txModalTitle" class="font-bold text-lg">Добавить операцию</h3>
+                <button onclick="closeModal('modalTransaction')" class="text-slate-400 hover:text-slate-600"><i class="fa-solid fa-xmark text-lg"></i></button>
+            </div>
+            <form onsubmit="handleTransactionSubmit(event)" class="space-y-4">
+                <input type="hidden" id="txId" value="">
+                <input type="hidden" id="txType" value="expense">
+                
                 <div>
-                    <span class="text-xs text-slate-500 dark:text-slate-400 block font-medium">Общий Баланс Счетов</span>
-                    <span id="total-balance-display" class="text-2xl sm:text-3xl font-extrabold text-slate-900 dark:text-white tracking-tight">0 ₸</span>
-                </div>
-                <button onclick="openTransactionModal()" class="px-4 py-2.5 bg-gradient-to-r from-brand-600 to-red-600 hover:from-brand-700 hover:to-red-700 text-white font-bold text-sm rounded-xl shadow-lg shadow-brand-500/25 transition-all flex items-center gap-2 cursor-pointer">
-                    <i class="fa-solid fa-plus"></i>
-                    <span>Операция</span>
-                </button>
-            </div>
-
-            <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                <div class="bg-white dark:bg-darkcard p-5 rounded-2xl border border-slate-200 dark:border-darkborder shadow-sm flex items-center justify-between">
-                    <div>
-                        <p class="text-xs font-medium text-slate-500">Доходы (Всего)</p>
-                        <p id="dash-income-total" class="text-xl font-bold text-emerald-500 mt-1">+0 ₸</p>
-                    </div>
-                    <div class="w-10 h-10 rounded-xl bg-emerald-500/10 text-emerald-500 flex items-center justify-center"><i class="fa-solid fa-arrow-down-left"></i></div>
-                </div>
-                <div class="bg-white dark:bg-darkcard p-5 rounded-2xl border border-slate-200 dark:border-darkborder shadow-sm flex items-center justify-between">
-                    <div>
-                        <p class="text-xs font-medium text-slate-500">Расходы (Всего)</p>
-                        <p id="dash-expense-total" class="text-xl font-bold text-brand-500 mt-1">-0 ₸</p>
-                    </div>
-                    <div class="w-10 h-10 rounded-xl bg-brand-500/10 text-brand-500 flex items-center justify-center"><i class="fa-solid fa-arrow-up-right"></i></div>
-                </div>
-                <div class="bg-white dark:bg-darkcard p-5 rounded-2xl border border-slate-200 dark:border-darkborder shadow-sm flex items-center justify-between">
-                    <div>
-                        <p class="text-xs font-medium text-slate-500">Цели в Вишлисте</p>
-                        <p id="dash-wishlist-count" class="text-xl font-bold text-amber-500 mt-1">0 целей</p>
-                    </div>
-                    <div class="w-10 h-10 rounded-xl bg-amber-500/10 text-amber-500 flex items-center justify-center"><i class="fa-solid fa-bullseye"></i></div>
-                </div>
-            </div>
-
-            <div class="space-y-3">
-                <div class="flex items-center justify-between">
-                    <h2 class="text-lg font-bold">Мои Счета</h2>
-                    <button onclick="switchTab('accounts')" class="text-xs font-semibold text-brand-500 hover:underline cursor-pointer">Управление счетами</button>
-                </div>
-                <div id="dash-accounts-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4"></div>
-            </div>
-
-            <div class="bg-white dark:bg-darkcard rounded-2xl border border-slate-200 dark:border-darkborder shadow-sm overflow-hidden">
-                <div class="p-4 border-b border-slate-200 dark:border-darkborder flex items-center justify-between">
-                    <h3 class="font-bold text-base">Последние транзакции</h3>
-                    <button onclick="switchTab('analytics')" class="text-xs font-semibold text-brand-500 cursor-pointer">Вся аналитика</button>
-                </div>
-                <div class="divide-y divide-slate-100 dark:divide-darkborder" id="recent-transactions-list"></div>
-            </div>
-        </section>
-
-        <!-- TAB 2: ACCOUNTS -->
-        <section id="view-accounts" class="tab-content hidden space-y-6">
-            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                <div>
-                    <h2 class="text-xl font-extrabold tracking-tight">Управление Счетами</h2>
-                    <p class="text-xs text-slate-500">Добавьте свои счета и карты для ведения точного учета.</p>
-                </div>
-                <button onclick="openModal('modal-add-account')" class="px-4 py-2 bg-slate-900 dark:bg-slate-100 text-white dark:text-slate-900 rounded-xl font-semibold text-sm flex items-center gap-2 self-start cursor-pointer">
-                    <i class="fa-solid fa-plus text-xs"></i><span>Добавить Счет</span>
-                </button>
-            </div>
-            <div id="full-accounts-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4"></div>
-        </section>
-
-        <!-- TAB 3: ANALYTICS -->
-        <section id="view-analytics" class="tab-content hidden space-y-6">
-            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white dark:bg-darkcard p-4 rounded-2xl border border-slate-200 dark:border-darkborder">
-                <h2 class="text-xl font-extrabold tracking-tight">Финансовая Аналитика</h2>
-                <div class="flex bg-slate-100 dark:bg-darkbg p-1 rounded-xl gap-1 self-start">
-                    <button onclick="setAnalyticsPeriod('day')" id="period-day" class="period-btn px-3 py-1.5 text-xs font-bold rounded-lg text-slate-400 cursor-pointer">День</button>
-                    <button onclick="setAnalyticsPeriod('week')" id="period-week" class="period-btn px-3 py-1.5 text-xs font-bold rounded-lg text-slate-400 cursor-pointer">Неделя</button>
-                    <button onclick="setAnalyticsPeriod('month')" id="period-month" class="period-btn px-3 py-1.5 text-xs font-bold bg-brand-500 text-white rounded-lg cursor-pointer">Месяц</button>
-                    <button onclick="setAnalyticsPeriod('year')" id="period-year" class="period-btn px-3 py-1.5 text-xs font-bold rounded-lg text-slate-400 cursor-pointer">Год</button>
-                </div>
-            </div>
-
-            <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                <div class="bg-white dark:bg-darkcard p-4 rounded-2xl border border-slate-200 dark:border-darkborder">
-                    <span class="text-xs text-slate-500 block">Доход за период</span>
-                    <span id="analytics-period-income" class="text-lg font-bold text-emerald-500">+0 ₸</span>
-                </div>
-                <div class="bg-white dark:bg-darkcard p-4 rounded-2xl border border-slate-200 dark:border-darkborder">
-                    <span class="text-xs text-slate-500 block">Расход за период</span>
-                    <span id="analytics-period-expense" class="text-lg font-bold text-brand-500">-0 ₸</span>
-                </div>
-                <div class="bg-white dark:bg-darkcard p-4 rounded-2xl border border-slate-200 dark:border-darkborder">
-                    <span class="text-xs text-slate-500 block">Чистый баланс</span>
-                    <span id="analytics-period-net" class="text-lg font-bold">0 ₸</span>
-                </div>
-            </div>
-
-            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                <div class="bg-white dark:bg-darkcard p-5 rounded-2xl border border-slate-200 dark:border-darkborder shadow-sm">
-                    <h3 class="font-bold text-sm mb-4">Структура Расходов</h3>
-                    <div class="relative h-64 flex items-center justify-center"><canvas id="categoriesChart"></canvas></div>
-                </div>
-                <div class="bg-white dark:bg-darkcard p-5 rounded-2xl border border-slate-200 dark:border-darkborder shadow-sm">
-                    <h3 class="font-bold text-sm mb-4">Доходы и Расходы</h3>
-                    <div class="relative h-64 flex items-center justify-center"><canvas id="incomeExpenseChart"></canvas></div>
-                </div>
-            </div>
-
-            <div class="bg-white dark:bg-darkcard rounded-2xl border border-slate-200 dark:border-darkborder overflow-hidden shadow-sm">
-                <div class="p-4 border-b border-slate-200 dark:border-darkborder flex justify-between items-center">
-                    <h3 class="font-bold text-base">История операций</h3>
-                </div>
-                <div class="divide-y divide-slate-100 dark:divide-darkborder" id="all-transactions-list"></div>
-            </div>
-        </section>
-
-        <!-- TAB 4: WISHLIST -->
-        <section id="view-wishlist" class="tab-content hidden space-y-6">
-            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                <div>
-                    <h2 class="text-xl font-extrabold tracking-tight">Вишлист & Цели</h2>
-                    <p class="text-xs text-slate-500">Добавляйте свои желания и управляйте ими.</p>
-                </div>
-                <button onclick="openModal('modal-wishlist')" class="px-4 py-2 bg-brand-500 hover:bg-brand-600 text-white rounded-xl font-semibold text-sm shadow-md self-start cursor-pointer">
-                    <i class="fa-solid fa-plus text-xs"></i><span>Добавить цель</span>
-                </button>
-            </div>
-            <div id="wishlist-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6"></div>
-        </section>
-
-        <!-- TAB 5: CALENDAR & SHIFTS -->
-        <section id="view-calendar" class="tab-content hidden space-y-6">
-            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white dark:bg-darkcard p-5 rounded-2xl border border-slate-200 dark:border-darkborder">
-                <div>
-                    <h2 class="text-xl font-extrabold tracking-tight">Календарь смен и подработок</h2>
-                    <p class="text-xs text-slate-500 mt-0.5">Журнал смен (не влияет на баланс счетов).</p>
-                </div>
-                <button onclick="openModal('modal-shift')" class="px-4 py-2.5 bg-brand-500 hover:bg-brand-600 text-white rounded-xl font-bold text-sm shadow-md shadow-brand-500/20 flex items-center gap-2 self-start cursor-pointer">
-                    <i class="fa-solid fa-plus"></i><span>Отметить смену</span>
-                </button>
-            </div>
-
-            <!-- Shifts Summary -->
-            <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                <div class="bg-white dark:bg-darkcard p-4 rounded-2xl border border-slate-200 dark:border-darkborder">
-                    <span class="text-xs text-slate-500 block">Отработано смен</span>
-                    <span id="shift-count-badge" class="text-xl font-black text-brand-500 mt-1 block">0 смен</span>
-                </div>
-                <div class="bg-white dark:bg-darkcard p-4 rounded-2xl border border-slate-200 dark:border-darkborder">
-                    <span class="text-xs text-slate-500 block">Заработано (в журнале)</span>
-                    <span id="shift-earnings-badge" class="text-xl font-black text-emerald-500 mt-1 block">0 ₸</span>
-                </div>
-                <div class="bg-white dark:bg-darkcard p-4 rounded-2xl border border-slate-200 dark:border-darkborder">
-                    <span class="text-xs text-slate-500 block">Выходных / Отпуск</span>
-                    <span id="shift-off-badge" class="text-xl font-black text-blue-500 mt-1 block">0 дней</span>
-                </div>
-            </div>
-
-            <!-- Calendar View -->
-            <div class="bg-white dark:bg-darkcard rounded-2xl border border-slate-200 dark:border-darkborder p-5 space-y-4 shadow-sm">
-                <div class="flex items-center justify-between">
-                    <h3 class="font-bold text-base" id="calendar-month-title">Октябрь 2026</h3>
-                    <div class="flex gap-2">
-                        <button onclick="changeMonth(-1)" class="p-2 rounded-lg bg-slate-100 dark:bg-darkbg hover:bg-brand-500 hover:text-white cursor-pointer"><i class="fa-solid fa-chevron-left text-xs"></i></button>
-                        <button onclick="changeMonth(1)" class="p-2 rounded-lg bg-slate-100 dark:bg-darkbg hover:bg-brand-500 hover:text-white cursor-pointer"><i class="fa-solid fa-chevron-right text-xs"></i></button>
-                    </div>
-                </div>
-
-                <div class="grid grid-cols-7 gap-2 text-center text-xs font-bold text-slate-400">
-                    <div>Пн</div><div>Вт</div><div>Ср</div><div>Чт</div><div>Пт</div><div>Сб</div><div>Вс</div>
-                </div>
-                <div id="calendar-grid-days" class="grid grid-cols-7 gap-2"></div>
-            </div>
-
-            <!-- Shifts Log List -->
-            <div class="bg-white dark:bg-darkcard rounded-2xl border border-slate-200 dark:border-darkborder overflow-hidden shadow-sm">
-                <div class="p-4 border-b border-slate-200 dark:border-darkborder">
-                    <h3 class="font-bold text-base">Журнал смен</h3>
-                </div>
-                <div class="divide-y divide-slate-100 dark:divide-darkborder" id="shifts-log-list"></div>
-            </div>
-        </section>
-
-        <!-- TAB 6: AI MUMIND (ЧИСТЫЙ СОВЕТНИК) -->
-        <section id="view-aimind" class="tab-content hidden space-y-6">
-            <div class="bg-gradient-to-r from-brand-600 to-rose-600 p-6 rounded-3xl text-white shadow-xl relative overflow-hidden flex flex-col sm:flex-row items-center justify-between gap-6">
-                <div class="space-y-2 z-10">
-                    <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/20 backdrop-blur-md text-xs font-bold uppercase tracking-wider">
-                        <i class="fa-solid fa-robot"></i> ИИ MuMind Financial Coach
-                    </div>
-                    <h2 class="text-2xl sm:text-3xl font-black">Ваш персональный финансовый советник</h2>
-                    <p class="text-xs sm:text-sm text-white/90 max-w-2xl leading-relaxed">
-                        Интеллектуальный помощник, который анализирует ваши реальные доходы и расходы, давая персональные рекомендации по накоплению и оптимизации бюджета.
-                    </p>
-                </div>
-                <div class="w-16 h-16 rounded-2xl bg-white/20 backdrop-blur-md flex items-center justify-center text-3xl shrink-0">
-                    <i class="fa-solid fa-brain"></i>
-                </div>
-            </div>
-
-            <div class="bg-white dark:bg-darkcard rounded-3xl border border-slate-200 dark:border-darkborder p-6 sm:p-8 space-y-6 shadow-sm">
-                <h3 class="text-lg font-extrabold text-brand-500 flex items-center gap-2">
-                    <span class="w-7 h-7 rounded-lg bg-brand-500/10 flex items-center justify-center text-sm font-bold">💡</span>
-                    Рекомендации ИИ на основе вашей активности
-                </h3>
-                <div id="ai-advice-container" class="bg-slate-50 dark:bg-darkbg p-5 rounded-2xl border border-slate-200 dark:border-darkborder text-sm text-slate-700 dark:text-slate-300 leading-relaxed space-y-2">
-                    <p>Загрузите счета и добавьте несколько транзакций, чтобы ИИ проанализировал ваши финансовые привычки.</p>
-                </div>
-            </div>
-        </section>
-
-    </main>
-
-    <!-- MODAL: ADD TRANSACTION -->
-    <div id="modal-transaction" class="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm hidden flex items-center justify-center p-4">
-        <div class="bg-white dark:bg-darkcard border border-slate-200 dark:border-darkborder w-full max-w-md rounded-2xl p-6 shadow-2xl relative">
-            <button onclick="closeModal('modal-transaction')" class="absolute right-4 top-4 text-slate-400 hover:text-white text-lg cursor-pointer"><i class="fa-solid fa-xmark"></i></button>
-            <h3 class="text-lg font-bold mb-4">Новая Операция</h3>
-            <form onsubmit="handleSaveTransaction(event)" class="space-y-4">
-                <div class="grid grid-cols-2 gap-2 p-1 bg-slate-100 dark:bg-darkbg rounded-xl">
-                    <button type="button" onclick="setTransactionType('expense')" id="trans-type-expense" class="py-2 text-xs font-bold rounded-lg bg-brand-500 text-white cursor-pointer">Расход</button>
-                    <button type="button" onclick="setTransactionType('income')" id="trans-type-income" class="py-2 text-xs font-bold rounded-lg text-slate-400 cursor-pointer">Доход</button>
-                </div>
-                <input type="hidden" id="trans-type-input" value="expense">
-                <div>
-                    <label class="block text-xs font-semibold text-slate-500 mb-1">Счет</label>
-                    <select id="trans-account-select" required class="w-full bg-slate-50 dark:bg-darkbg border border-slate-200 dark:border-darkborder rounded-xl p-2.5 text-sm"></select>
+                    <label class="block text-xs font-semibold mb-1 text-slate-500">Сумма (₸)</label>
+                    <input type="number" id="txAmount" required placeholder="0" class="w-full bg-slate-100 dark:bg-slate-800 border-0 rounded-xl p-3 text-lg font-bold focus:ring-2 focus:ring-brand-500" />
                 </div>
                 <div>
-                    <label class="block text-xs font-semibold text-slate-500 mb-1">Категория</label>
-                    <select id="trans-category-select" required class="w-full bg-slate-50 dark:bg-darkbg border border-slate-200 dark:border-darkborder rounded-xl p-2.5 text-sm">
-                        <option value="Еда и продукты">🍎 Еда и продукты</option>
-                        <option value="Жилье и аренда">🏠 Жилье и аренда</option>
-                        <option value="Транспорт">🚗 Транспорт и связь</option>
-                        <option value="Зарплата / Стипендия">💰 Зарплата / Стипендия</option>
-                        <option value="Личные расходы">🛍️ Личные расходы</option>
-                        <option value="Прочее">📦 Прочее</option>
+                    <label class="block text-xs font-semibold mb-1 text-slate-500">Счет</label>
+                    <select id="txAccountSelect" required class="w-full bg-slate-100 dark:bg-slate-800 border-0 rounded-xl p-3 text-sm focus:ring-2 focus:ring-brand-500"></select>
+                </div>
+
+                <!-- Expense Category Select -->
+                <div id="txCategoryExpenseBox">
+                    <label class="block text-xs font-semibold mb-1 text-slate-500">Категория расхода</label>
+                    <select id="txCategorySelectExpense" class="w-full bg-slate-100 dark:bg-slate-800 border-0 rounded-xl p-3 text-sm focus:ring-2 focus:ring-brand-500">
+                        <option value="Продукты">🛒 Продукты</option>
+                        <option value="Кафе и Рестораны">🍽 Кафе и Рестораны</option>
+                        <option value="Транспорт">🚕 Транспорт</option>
+                        <option value="Покупки">🛍 Покупки</option>
+                        <option value="Развлечения">🎬 Развлечения</option>
+                        <option value="Коммуналка">🏠 Коммуналка</option>
+                        <option value="Другое">📦 Другое</option>
                     </select>
                 </div>
-                <div>
-                    <label class="block text-xs font-semibold text-slate-500 mb-1">Сумма</label>
-                    <input type="number" id="trans-amount-input" step="any" min="0" placeholder="0" required class="w-full bg-slate-50 dark:bg-darkbg border border-slate-200 dark:border-darkborder rounded-xl p-2.5 font-bold">
+
+                <!-- Income Category Select & Custom Option -->
+                <div id="txCategoryIncomeBox" class="hidden space-y-3">
+                    <div>
+                        <label class="block text-xs font-semibold mb-1 text-slate-500">Категория дохода</label>
+                        <select id="txCategorySelectIncome" onchange="toggleCustomIncomeCategory()" class="w-full bg-slate-100 dark:bg-slate-800 border-0 rounded-xl p-3 text-sm focus:ring-2 focus:ring-brand-500">
+                            <option value="Зарплата">💼 Зарплата</option>
+                            <option value="Стипендия">🎓 Стипендия</option>
+                            <option value="Подработка">🛠 Подработка</option>
+                            <option value="custom">➕ Свой вариант</option>
+                        </select>
+                    </div>
+                    <div id="txCustomIncomeContainer" class="hidden">
+                        <label class="block text-xs font-semibold mb-1 text-slate-500">Введите свою категорию</label>
+                        <input type="text" id="txCustomIncomeInput" placeholder="Например: Подарок / Проценты" class="w-full bg-slate-100 dark:bg-slate-800 border-0 rounded-xl p-3 text-sm focus:ring-2 focus:ring-brand-500" />
+                    </div>
                 </div>
+
                 <div>
-                    <label class="block text-xs font-semibold text-slate-500 mb-1">Описание</label>
-                    <input type="text" id="trans-note-input" placeholder="Например: Покупка продуктов" class="w-full bg-slate-50 dark:bg-darkbg border border-slate-200 dark:border-darkborder rounded-xl p-2.5 text-sm">
+                    <label class="block text-xs font-semibold mb-1 text-slate-500">Комментарий</label>
+                    <input type="text" id="txNote" placeholder="Например: Обед" class="w-full bg-slate-100 dark:bg-slate-800 border-0 rounded-xl p-3 text-sm focus:ring-2 focus:ring-brand-500" />
                 </div>
-                <div>
-                    <label class="block text-xs font-semibold text-slate-500 mb-1">Дата</label>
-                    <input type="date" id="trans-date-input" required class="w-full bg-slate-50 dark:bg-darkbg border border-slate-200 dark:border-darkborder rounded-xl p-2.5 text-sm">
-                </div>
-                <button type="submit" class="w-full py-3 bg-brand-500 hover:bg-brand-600 text-white font-bold text-sm rounded-xl cursor-pointer">Сохранить</button>
+                <button type="submit" class="w-full py-3 bg-brand-600 text-white font-bold rounded-xl hover:bg-brand-700 transition">Записать</button>
             </form>
         </div>
     </div>
 
-    <!-- MODAL: ADD SHIFT -->
-    <div id="modal-shift" class="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm hidden flex items-center justify-center p-4">
-        <div class="bg-white dark:bg-darkcard border border-slate-200 dark:border-darkborder w-full max-w-md rounded-2xl p-6 shadow-2xl relative">
-            <button onclick="closeModal('modal-shift')" class="absolute right-4 top-4 text-slate-400 hover:text-white text-lg cursor-pointer"><i class="fa-solid fa-xmark"></i></button>
-            <h3 class="text-lg font-bold mb-1">Отметить смену в календаре</h3>
-            <p class="text-xs text-slate-400 mb-4">Журнал смен не изменяет баланс ваших счетов.</p>
-            <form onsubmit="handleSaveShift(event)" class="space-y-4">
+    <!-- MODAL: ADD GOAL (WISHLIST) -->
+    <div id="modalGoal" class="fixed inset-0 bg-slate-950/60 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 w-full max-w-md rounded-3xl p-6 space-y-4 shadow-2xl">
+            <div class="flex items-center justify-between">
+                <h3 class="font-bold text-lg">Новая цель накопления</h3>
+                <button onclick="closeModal('modalGoal')" class="text-slate-400 hover:text-slate-600"><i class="fa-solid fa-xmark text-lg"></i></button>
+            </div>
+            <form onsubmit="handleGoalSubmit(event)" class="space-y-4">
                 <div>
-                    <label class="block text-xs font-semibold text-slate-500 mb-1">Дата смены</label>
-                    <input type="date" id="shift-date-input" required class="w-full bg-slate-50 dark:bg-darkbg border border-slate-200 dark:border-darkborder rounded-xl p-2.5 text-sm">
+                    <label class="block text-xs font-semibold mb-1 text-slate-500">Название цели</label>
+                    <input type="text" id="goalTitle" required placeholder="Например: Новый смартфон" class="w-full bg-slate-100 dark:bg-slate-800 border-0 rounded-xl p-3 text-sm focus:ring-2 focus:ring-brand-500" />
                 </div>
                 <div>
-                    <label class="block text-xs font-semibold text-slate-500 mb-1">Тип смены</label>
-                    <select id="shift-type-input" class="w-full bg-slate-50 dark:bg-darkbg border border-slate-200 dark:border-darkborder rounded-xl p-2.5 text-sm font-semibold">
-                        <option value="Night">🌙 Night (Ночная смена)</option>
-                        <option value="Late">🌇 Late (Вечерняя смена)</option>
-                        <option value="Day">☀️ Day (Дневная смена)</option>
-                        <option value="Morning">🌅 Morning (Утренняя смена)</option>
-                        <option value="Off">🏖️ Off (Выходной)</option>
-                        <option value="Vacation">🌴 Vacation (Отпуск)</option>
-                    </select>
+                    <label class="block text-xs font-semibold mb-1 text-slate-500">Целевая сумма (₸)</label>
+                    <input type="number" id="goalTargetAmount" required placeholder="0" class="w-full bg-slate-100 dark:bg-slate-800 border-0 rounded-xl p-3 text-sm font-bold focus:ring-2 focus:ring-brand-500" />
                 </div>
                 <div>
-                    <label class="block text-xs font-semibold text-slate-500 mb-1">Заработок за смену (₸) [Справочно в журнале]</label>
-                    <input type="number" id="shift-earnings-input" min="0" value="0" placeholder="10000" class="w-full bg-slate-50 dark:bg-darkbg border border-slate-200 dark:border-darkborder rounded-xl p-2.5 font-bold">
+                    <label class="block text-xs font-semibold mb-1 text-slate-500">Где копить (Счет/Депозит)</label>
+                    <select id="goalAccountSelect" required class="w-full bg-slate-100 dark:bg-slate-800 border-0 rounded-xl p-3 text-sm focus:ring-2 focus:ring-brand-500"></select>
                 </div>
-                <div>
-                    <label class="block text-xs font-semibold text-slate-500 mb-1">Комментарий / Название</label>
-                    <input type="text" id="shift-note-input" placeholder="Например: Смена в кофейне" class="w-full bg-slate-50 dark:bg-darkbg border border-slate-200 dark:border-darkborder rounded-xl p-2.5 text-sm">
-                </div>
-                <button type="submit" class="w-full py-3 bg-brand-500 hover:bg-brand-600 text-white font-bold text-sm rounded-xl cursor-pointer">Добавить в журнал</button>
+                <button type="submit" class="w-full py-3 bg-brand-600 text-white font-bold rounded-xl hover:bg-brand-700 transition">Создать цель</button>
             </form>
         </div>
     </div>
 
-    <!-- MODAL: ACCOUNT SETTINGS -->
-    <div id="modal-auth" class="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm hidden flex items-center justify-center p-4">
-        <div class="bg-white dark:bg-darkcard border border-slate-200 dark:border-darkborder w-full max-w-sm rounded-2xl p-6 shadow-2xl relative">
-            <button onclick="closeModal('modal-auth')" class="absolute right-4 top-4 text-slate-400 hover:text-white text-lg cursor-pointer"><i class="fa-solid fa-xmark"></i></button>
-            <div class="w-12 h-12 bg-brand-500/10 text-brand-500 rounded-2xl flex items-center justify-center mx-auto mb-3 text-xl font-bold">Mu</div>
-            <h3 class="text-lg font-bold text-center">Профиль аккаунта</h3>
-            <form onsubmit="handleAuthSubmit(event)" class="space-y-4 mt-4">
+    <!-- MODAL: DEPOSIT / TOP UP GOAL -->
+    <div id="modalDepositGoal" class="fixed inset-0 bg-slate-950/60 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 w-full max-w-md rounded-3xl p-6 space-y-4 shadow-2xl">
+            <div class="flex items-center justify-between">
+                <h3 class="font-bold text-lg">Отложить на цель</h3>
+                <button onclick="closeModal('modalDepositGoal')" class="text-slate-400 hover:text-slate-600"><i class="fa-solid fa-xmark text-lg"></i></button>
+            </div>
+            <form onsubmit="handleDepositGoalSubmit(event)" class="space-y-4">
+                <input type="hidden" id="depositGoalId">
                 <div>
-                    <label class="block text-xs font-semibold text-slate-500 mb-1">Имя / Никнейм</label>
-                    <input type="text" id="auth-username-input" placeholder="Ваше Имя" required class="w-full bg-slate-50 dark:bg-darkbg border border-slate-200 dark:border-darkborder rounded-xl p-2.5 text-sm font-semibold">
+                    <p id="depositGoalNameDisplay" class="text-sm font-semibold text-brand-600 mb-2"></p>
+                    <label class="block text-xs font-semibold mb-1 text-slate-500">Сумма пополнения (₸)</label>
+                    <input type="number" id="depositGoalAmount" required placeholder="0" class="w-full bg-slate-100 dark:bg-slate-800 border-0 rounded-xl p-3 text-lg font-bold focus:ring-2 focus:ring-brand-500" />
                 </div>
                 <div>
-                    <label class="block text-xs font-semibold text-slate-500 mb-1">Email</label>
-                    <input type="email" id="auth-email-input" placeholder="student@mubudget.kz" class="w-full bg-slate-50 dark:bg-darkbg border border-slate-200 dark:border-darkborder rounded-xl p-2.5 text-sm">
+                    <label class="block text-xs font-semibold mb-1 text-slate-500">Откуда списать средства?</label>
+                    <select id="depositFromAccountSelect" required class="w-full bg-slate-100 dark:bg-slate-800 border-0 rounded-xl p-3 text-sm focus:ring-2 focus:ring-brand-500"></select>
                 </div>
-                <div>
-                    <label class="block text-xs font-semibold text-slate-500 mb-1">Номер телефона</label>
-                    <input type="tel" id="auth-phone-input" placeholder="+7 (777) 000-00-00" class="w-full bg-slate-50 dark:bg-darkbg border border-slate-200 dark:border-darkborder rounded-xl p-2.5 text-sm">
-                </div>
-                <button type="submit" class="w-full py-3 bg-brand-500 hover:bg-brand-600 text-white font-bold text-sm rounded-xl cursor-pointer">Сохранить профиль</button>
+                <button type="submit" class="w-full py-3 bg-emerald-600 text-white font-bold rounded-xl hover:bg-emerald-700 transition">Отложить средства</button>
             </form>
         </div>
     </div>
 
     <!-- MODAL: ADD ACCOUNT -->
-    <div id="modal-add-account" class="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm hidden flex items-center justify-center p-4">
-        <div class="bg-white dark:bg-darkcard border border-slate-200 dark:border-darkborder w-full max-w-md rounded-2xl p-6 shadow-2xl relative">
-            <button onclick="closeModal('modal-add-account')" class="absolute right-4 top-4 text-slate-400 hover:text-white text-lg cursor-pointer"><i class="fa-solid fa-xmark"></i></button>
-            <h3 class="text-lg font-bold mb-4">Новый Счет</h3>
-            <form onsubmit="handleSaveAccount(event)" class="space-y-4">
+    <div id="modalAccount" class="fixed inset-0 bg-slate-950/60 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 w-full max-w-md rounded-3xl p-6 space-y-4 shadow-2xl">
+            <div class="flex items-center justify-between">
+                <h3 class="font-bold text-lg">Новый счет</h3>
+                <button onclick="closeModal('modalAccount')" class="text-slate-400 hover:text-slate-600"><i class="fa-solid fa-xmark text-lg"></i></button>
+            </div>
+            <form onsubmit="handleAccountSubmit(event)" class="space-y-4">
                 <div>
-                    <label class="block text-xs font-semibold text-slate-500 mb-1">Название</label>
-                    <input type="text" id="acc-name-input" placeholder="Например: Kaspi Gold" required class="w-full bg-slate-50 dark:bg-darkbg border border-slate-200 dark:border-darkborder rounded-xl p-2.5 text-sm">
+                    <label class="block text-xs font-semibold mb-1 text-slate-500">Название счета</label>
+                    <input type="text" id="accName" required placeholder="Например: Kaspi Gold / Наличные" class="w-full bg-slate-100 dark:bg-slate-800 border-0 rounded-xl p-3 text-sm focus:ring-2 focus:ring-brand-500" />
                 </div>
                 <div>
-                    <label class="block text-xs font-semibold text-slate-500 mb-1">Начальный баланс</label>
-                    <input type="number" id="acc-balance-input" step="any" placeholder="0" required class="w-full bg-slate-50 dark:bg-darkbg border border-slate-200 dark:border-darkborder rounded-xl p-2.5 font-bold">
-                </div>
-                <div>
-                    <label class="block text-xs font-semibold text-slate-500 mb-1">Градиент</label>
-                    <select id="acc-color-select" class="w-full bg-slate-50 dark:bg-darkbg border border-slate-200 dark:border-darkborder rounded-xl p-2.5 text-sm">
-                        <option value="from-red-600 to-rose-700">Красный (Kaspi Style)</option>
-                        <option value="from-emerald-600 to-teal-700">Зеленый (Halyk Style)</option>
-                        <option value="from-amber-500 to-orange-600">Оранжевый (Наличные)</option>
-                        <option value="from-slate-700 to-slate-900">Темно-серый</option>
+                    <label class="block text-xs font-semibold mb-1 text-slate-500">Тип счета</label>
+                    <select id="accType" required class="w-full bg-slate-100 dark:bg-slate-800 border-0 rounded-xl p-3 text-sm focus:ring-2 focus:ring-brand-500">
+                        <option value="card">💳 Банковская карта</option>
+                        <option value="cash">💵 Наличные</option>
+                        <option value="deposit">🏦 Депозит / Сбережения</option>
                     </select>
                 </div>
-                <button type="submit" class="w-full py-3 bg-brand-500 hover:bg-brand-600 text-white font-bold text-sm rounded-xl cursor-pointer">Создать Счет</button>
+                <div>
+                    <label class="block text-xs font-semibold mb-1 text-slate-500">Начальный баланс (₸)</label>
+                    <input type="number" id="accBalance" required placeholder="0" class="w-full bg-slate-100 dark:bg-slate-800 border-0 rounded-xl p-3 text-sm font-bold focus:ring-2 focus:ring-brand-500" />
+                </div>
+                <button type="submit" class="w-full py-3 bg-brand-600 text-white font-bold rounded-xl hover:bg-brand-700 transition">Создать счет</button>
             </form>
         </div>
     </div>
 
-    <!-- MODAL: ADD WISHLIST -->
-    <div id="modal-wishlist" class="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm hidden flex items-center justify-center p-4">
-        <div class="bg-white dark:bg-darkcard border border-slate-200 dark:border-darkborder w-full max-w-md rounded-2xl p-6 shadow-2xl relative">
-            <button onclick="closeModal('modal-wishlist')" class="absolute right-4 top-4 text-slate-400 hover:text-white text-lg cursor-pointer"><i class="fa-solid fa-xmark"></i></button>
-            <h3 class="text-lg font-bold mb-4">Новая цель в Вишлист</h3>
-            <form onsubmit="handleSaveWishlist(event)" class="space-y-4">
+    <!-- MODAL: ADD DEBT -->
+    <div id="modalDebt" class="fixed inset-0 bg-slate-950/60 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 w-full max-w-md rounded-3xl p-6 space-y-4 shadow-2xl">
+            <div class="flex items-center justify-between">
+                <h3 class="font-bold text-lg">Добавить долг или рассрочку</h3>
+                <button onclick="closeModal('modalDebt')" class="text-slate-400 hover:text-slate-600"><i class="fa-solid fa-xmark text-lg"></i></button>
+            </div>
+            <form onsubmit="handleDebtSubmit(event)" class="space-y-4">
                 <div>
-                    <label class="block text-xs font-semibold text-slate-500 mb-1">Название</label>
-                    <input type="text" id="wish-title-input" placeholder="iPhone 16 Pro" required class="w-full bg-slate-50 dark:bg-darkbg border border-slate-200 dark:border-darkborder rounded-xl p-2.5 text-sm">
+                    <label class="block text-xs font-semibold mb-1 text-slate-500">Кому / Организация</label>
+                    <input type="text" id="debtTitle" required placeholder="Например: Kaspi Red или Имя" class="w-full bg-slate-100 dark:bg-slate-800 border-0 rounded-xl p-3 text-sm focus:ring-2 focus:ring-brand-500" />
                 </div>
                 <div>
-                    <label class="block text-xs font-semibold text-slate-500 mb-1">Стоимость (₸)</label>
-                    <input type="number" id="wish-price-input" min="1" placeholder="600000" required class="w-full bg-slate-50 dark:bg-darkbg border border-slate-200 dark:border-darkborder rounded-xl p-2.5 font-bold">
+                    <label class="block text-xs font-semibold mb-1 text-slate-500">Сумма долга (₸)</label>
+                    <input type="number" id="debtAmount" required placeholder="0" class="w-full bg-slate-100 dark:bg-slate-800 border-0 rounded-xl p-3 text-sm font-bold focus:ring-2 focus:ring-brand-500" />
                 </div>
                 <div>
-                    <label class="block text-xs font-semibold text-slate-500 mb-1">Фото URL</label>
-                    <input type="url" id="wish-image-input" placeholder="https://..." class="w-full bg-slate-50 dark:bg-darkbg border border-slate-200 dark:border-darkborder rounded-xl p-2.5 text-sm">
+                    <label class="block text-xs font-semibold mb-1 text-slate-500">Дата возврата</label>
+                    <input type="date" id="debtDueDate" required class="w-full bg-slate-100 dark:bg-slate-800 border-0 rounded-xl p-3 text-sm focus:ring-2 focus:ring-brand-500" />
                 </div>
-                <button type="submit" class="w-full py-3 bg-brand-500 hover:bg-brand-600 text-white font-bold text-sm rounded-xl cursor-pointer">Добавить</button>
+                <button type="submit" class="w-full py-3 bg-rose-600 text-white font-bold rounded-xl hover:bg-rose-700 transition">Сохранить долг</button>
             </form>
         </div>
     </div>
 
-    <!-- TOAST CONTAINER -->
-    <div id="toast-container" class="fixed bottom-5 right-5 z-50 space-y-2 pointer-events-none"></div>
+    <!-- MODAL: ADD SHIFT -->
+    <div id="modalShift" class="fixed inset-0 bg-slate-950/60 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 w-full max-w-md rounded-3xl p-6 space-y-4 shadow-2xl relative">
+            <div class="flex items-center justify-between">
+                <div>
+                    <h3 class="font-bold text-lg">Отметить смену в календаре</h3>
+                    <p class="text-xs text-slate-400">Журнал смен фиксирует график и доход</p>
+                </div>
+                <button onclick="closeModal('modalShift')" class="text-slate-400 hover:text-slate-600"><i class="fa-solid fa-xmark text-lg"></i></button>
+            </div>
+            <form onsubmit="handleShiftSubmit(event)" class="space-y-4">
+                <div>
+                    <label class="block text-xs font-semibold mb-1 text-slate-500">Дата смены</label>
+                    <input type="date" id="shiftDate" required class="w-full bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl p-3 text-sm focus:ring-2 focus:ring-rose-500" />
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold mb-1 text-slate-500">Тип смены</label>
+                    <select id="shiftType" required class="w-full bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl p-3 text-sm focus:ring-2 focus:ring-rose-500">
+                        <option value="Night">🌙 Night (Ночная смена)</option>
+                        <option value="Late">🌆 Late (Вечерняя смена)</option>
+                        <option value="Day">☀️ Day (Дневная смена)</option>
+                        <option value="Morning">🌅 Morning (Утренняя смена)</option>
+                        <option value="Off">☕ Off (Выходной)</option>
+                        <option value="Vacation">🌴 Vacation (Отпуск)</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold mb-1 text-slate-500">Заработок за смену (₸) [Справочно в журнале]</label>
+                    <input type="number" id="shiftPay" placeholder="0" class="w-full bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl p-3 text-sm font-bold focus:ring-2 focus:ring-rose-500" />
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold mb-1 text-slate-500">Зачислить заработок на счет? (Опционально)</label>
+                    <select id="shiftTargetAccount" class="w-full bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl p-3 text-sm focus:ring-2 focus:ring-rose-500">
+                        <option value="">Не зачислять на баланс</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold mb-1 text-slate-500">Комментарий / Название</label>
+                    <input type="text" id="shiftNote" placeholder="Например: Смена в кофейне" class="w-full bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl p-3 text-sm focus:ring-2 focus:ring-rose-500" />
+                </div>
+                <button type="submit" class="w-full py-3.5 bg-rose-600 hover:bg-rose-700 text-white font-bold rounded-xl transition shadow-lg shadow-rose-600/20">Добавить в журнал</button>
+            </form>
+        </div>
+    </div>
 
-    <!-- JAVASCRIPT APP LOGIC -->
     <script>
-        const STORAGE_KEY = 'mubudget_state_clean_v5';
-
-        let state = {
-            theme: 'dark',
-            currency: '₸',
-            user: { name: 'Гость', email: '', phone: '' },
-            accounts: [],
-            transactions: [],
-            shifts: [],
-            wishlist: [],
-            analyticsPeriod: 'month',
-            currentCalendarDate: new Date()
-        };
-
-        let catChart = null;
-        let ieChart = null;
-
-        window.onload = function() {
-            loadState();
-            applyTheme(state.theme);
-            document.getElementById('currency-select').value = state.currency;
-            document.getElementById('trans-date-input').value = new Date().toISOString().split('T')[0];
-            document.getElementById('shift-date-input').value = new Date().toISOString().split('T')[0];
-            updateUserDisplay();
-            renderAll();
-        };
-
-        function loadState() {
-            const saved = localStorage.getItem(STORAGE_KEY);
-            if (saved) {
-                try { state = JSON.parse(saved); } catch(e) {}
+        // Global Application State (Starts Completely EMPTY)
+        const APP_STATE = {
+            user: JSON.parse(localStorage.getItem('mubudget_user')) || { name: 'Пользователь', status: 'Активный' },
+            theme: localStorage.getItem('mubudget_theme') || 'dark',
+            budgetLimit: JSON.parse(localStorage.getItem('mubudget_limit')) || { period: 'month', amount: 0 },
+            accounts: JSON.parse(localStorage.getItem('mubudget_accounts')) || [],
+            transactions: JSON.parse(localStorage.getItem('mubudget_transactions')) || [],
+            goals: JSON.parse(localStorage.getItem('mubudget_goals')) || [],
+            debts: JSON.parse(localStorage.getItem('mubudget_debts')) || [],
+            shifts: JSON.parse(localStorage.getItem('mubudget_shifts')) || [],
+            settings: JSON.parse(localStorage.getItem('mubudget_settings')) || {
+                debtsModuleEnabled: true,
+                notifMorning: true,
+                notifDebts: true
             }
-        }
+        };
 
+        let expenseChartInstance = null;
+        let currentCalendarDate = new Date();
+
+        const SHIFT_TYPES_INFO = {
+            'Night': { label: 'Ночная', icon: '🌙', bg: 'bg-indigo-950/80 text-indigo-200 border-indigo-700' },
+            'Late': { label: 'Вечерняя', icon: '🌆', bg: 'bg-purple-950/80 text-purple-200 border-purple-700' },
+            'Day': { label: 'Дневная', icon: '☀️', bg: 'bg-amber-500/20 text-amber-700 dark:text-amber-300 border-amber-400' },
+            'Morning': { label: 'Утренняя', icon: '🌅', bg: 'bg-orange-500/20 text-orange-700 dark:text-orange-300 border-orange-400' },
+            'Off': { label: 'Выходной', icon: '☕', bg: 'bg-emerald-500/20 text-emerald-700 dark:text-emerald-300 border-emerald-400' },
+            'Vacation': { label: 'Отпуск', icon: '🌴', bg: 'bg-cyan-500/20 text-cyan-700 dark:text-cyan-300 border-cyan-400' }
+        };
+
+        // Initialize App on Window Load
+        window.onload = function() {
+            setTheme(APP_STATE.theme);
+            initUserProfile();
+            renderAllData();
+            checkNotifications();
+        };
+
+        // Save State Helper
         function saveState() {
-            localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
-            renderAll();
+            localStorage.setItem('mubudget_user', JSON.stringify(APP_STATE.user));
+            localStorage.setItem('mubudget_theme', APP_STATE.theme);
+            localStorage.setItem('mubudget_limit', JSON.stringify(APP_STATE.budgetLimit));
+            localStorage.setItem('mubudget_accounts', JSON.stringify(APP_STATE.accounts));
+            localStorage.setItem('mubudget_transactions', JSON.stringify(APP_STATE.transactions));
+            localStorage.setItem('mubudget_goals', JSON.stringify(APP_STATE.goals));
+            localStorage.setItem('mubudget_debts', JSON.stringify(APP_STATE.debts));
+            localStorage.setItem('mubudget_shifts', JSON.stringify(APP_STATE.shifts));
+            localStorage.setItem('mubudget_settings', JSON.stringify(APP_STATE.settings));
+            
+            renderAllData();
         }
 
-        function renderAll() {
-            calculateTotalBalance();
-            renderAccounts();
-            renderTransactions();
-            renderShiftsCalendar();
-            renderWishlist();
-            renderAnalytics();
-            renderAIMind();
-            populateDropdowns();
-        }
-
-        function applyTheme(theme) {
-            state.theme = theme;
+        // Theme Toggle Handler
+        function setTheme(theme) {
+            APP_STATE.theme = theme;
             if (theme === 'dark') {
                 document.documentElement.classList.add('dark');
-                document.getElementById('theme-icon').className = 'fa-solid fa-sun text-amber-400';
+                document.getElementById('themeBtnDark').className = "px-3 py-1.5 text-xs font-semibold rounded-lg transition bg-brand-600 text-white shadow";
+                document.getElementById('themeBtnLight').className = "px-3 py-1.5 text-xs font-semibold rounded-lg transition text-slate-600 dark:text-slate-400";
             } else {
                 document.documentElement.classList.remove('dark');
-                document.getElementById('theme-icon').className = 'fa-solid fa-moon text-slate-700';
+                document.getElementById('themeBtnLight').className = "px-3 py-1.5 text-xs font-semibold rounded-lg transition bg-brand-600 text-white shadow";
+                document.getElementById('themeBtnDark').className = "px-3 py-1.5 text-xs font-semibold rounded-lg transition text-slate-600 dark:text-slate-400";
             }
-        }
-
-        function toggleTheme() {
-            applyTheme(state.theme === 'dark' ? 'light' : 'dark');
             saveState();
         }
 
-        function changeCurrency(curr) {
-            state.currency = curr;
-            saveState();
-        }
+        // Tab Switcher Function
+        function switchTab(tabId) {
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
+            const activeTab = document.getElementById(`tab-${tabId}`);
+            if (activeTab) activeTab.classList.remove('hidden');
 
-        function formatMoney(amount) {
-            return Number(amount).toLocaleString('ru-RU') + ' ' + state.currency;
-        }
-
-        function calculateTotalBalance() {
-            const total = state.accounts.reduce((sum, a) => sum + Number(a.balance), 0);
-            const el = document.getElementById('total-balance-display');
-            if (el) el.innerText = formatMoney(total);
-        }
-
-        function renderAccounts() {
-            const dash = document.getElementById('dash-accounts-grid');
-            const full = document.getElementById('full-accounts-grid');
-            if (!dash || !full) return;
-            dash.innerHTML = ''; full.innerHTML = '';
-
-            if (state.accounts.length === 0) {
-                dash.innerHTML = `<p class="text-xs text-slate-400 col-span-full">Нет счетов. Создайте первый счет во вкладке «Мои счета».</p>`;
-                full.innerHTML = `<p class="text-xs text-slate-400 col-span-full">У вас пока нет счетов. Нажмите «Добавить Счет» выше.</p>`;
-                return;
-            }
-
-            state.accounts.forEach(acc => {
-                const html = `
-                    <div class="bg-gradient-to-br ${acc.gradient} text-white p-5 rounded-2xl shadow-lg relative overflow-hidden flex flex-col justify-between h-40">
-                        <div class="flex justify-between items-start z-10">
-                            <div>
-                                <span class="text-xs font-medium text-white/80">${acc.name}</span>
-                                <span class="text-xl font-black mt-1 block">${formatMoney(acc.balance)}</span>
-                            </div>
-                            <div class="w-8 h-8 rounded-full bg-white/20 flex items-center justify-center"><i class="fa-solid ${acc.icon || 'fa-wallet'} text-xs"></i></div>
-                        </div>
-                        <div class="flex justify-between items-center z-10 pt-4 border-t border-white/10 text-xs">
-                            <span class="text-white/70 font-mono">ID: ${acc.id.slice(-4)}</span>
-                            <button onclick="deleteAccount('${acc.id}')" class="text-white/60 hover:text-white cursor-pointer" title="Удалить счет"><i class="fa-solid fa-trash"></i></button>
-                        </div>
-                    </div>
-                `;
-                dash.innerHTML += html; full.innerHTML += html;
-            });
-        }
-
-        function populateDropdowns() {
-            const sel = document.getElementById('trans-account-select');
-            if (sel) {
-                sel.innerHTML = '';
-                if (state.accounts.length === 0) {
-                    sel.innerHTML = `<option value="">Сначала создайте счет!</option>`;
-                    return;
-                }
-                state.accounts.forEach(acc => {
-                    sel.innerHTML += `<option value="${acc.id}">${acc.name} (${formatMoney(acc.balance)})</option>`;
-                });
-            }
-        }
-
-        function renderTransactions() {
-            const recent = document.getElementById('recent-transactions-list');
-            const all = document.getElementById('all-transactions-list');
-            if (!recent || !all) return;
-            recent.innerHTML = ''; all.innerHTML = '';
-
-            let incTotal = 0, expTotal = 0;
-            const sorted = [...state.transactions].sort((a,b) => new Date(b.date) - new Date(a.date));
-
-            if (sorted.length === 0) {
-                recent.innerHTML = `<div class="p-4 text-xs text-slate-400 text-center">Нет недавних операций</div>`;
-                all.innerHTML = `<div class="p-4 text-xs text-slate-400 text-center">История операций пуста</div>`;
-                document.getElementById('dash-income-total').innerText = '+0 ' + state.currency;
-                document.getElementById('dash-expense-total').innerText = '-0 ' + state.currency;
-                return;
-            }
-
-            sorted.forEach(t => {
-                if (t.type === 'income') incTotal += Number(t.amount);
-                else expTotal += Number(t.amount);
-
-                const acc = state.accounts.find(a => a.id === t.accountId);
-                const isInc = t.type === 'income';
-
-                const itemHtml = `
-                    <div class="p-4 flex items-center justify-between hover:bg-slate-50 dark:hover:bg-darkbg/50">
-                        <div class="flex items-center gap-3">
-                            <div class="w-9 h-9 rounded-xl ${isInc ? 'bg-emerald-500/10 text-emerald-500' : 'bg-brand-500/10 text-brand-500'} flex items-center justify-center font-bold text-xs">
-                                <i class="fa-solid ${isInc ? 'fa-arrow-down' : 'fa-arrow-up'}"></i>
-                            </div>
-                            <div>
-                                <p class="text-xs font-bold">${t.note || t.category}</p>
-                                <p class="text-[10px] text-slate-400">${acc ? acc.name : 'Счет удален'} • ${t.date}</p>
-                            </div>
-                        </div>
-                        <div class="flex items-center gap-3">
-                            <span class="text-xs font-extrabold ${isInc ? 'text-emerald-500' : 'text-brand-500'}">${isInc ? '+' : '-'}${formatMoney(t.amount)}</span>
-                            <button onclick="deleteTransaction('${t.id}')" class="text-slate-400 hover:text-brand-500 cursor-pointer" title="Удалить транзакцию"><i class="fa-solid fa-trash text-xs"></i></button>
-                        </div>
-                    </div>
-                `;
-                all.innerHTML += itemHtml;
-            });
-
-            sorted.slice(0, 5).forEach(t => {
-                const isInc = t.type === 'income';
-                recent.innerHTML += `
-                    <div class="p-4 flex items-center justify-between text-xs">
-                        <div><b>${t.note || t.category}</b><p class="text-slate-400 text-[10px]">${t.date}</p></div>
-                        <span class="font-extrabold ${isInc ? 'text-emerald-500' : 'text-brand-500'}">${isInc ? '+' : '-'}${formatMoney(t.amount)}</span>
-                    </div>
-                `;
-            });
-
-            document.getElementById('dash-income-total').innerText = '+' + formatMoney(incTotal);
-            document.getElementById('dash-expense-total').innerText = '-' + formatMoney(expTotal);
-        }
-
-        function deleteTransaction(id) {
-            const idx = state.transactions.findIndex(t => t.id === id);
-            if (idx === -1) return;
-            const t = state.transactions[idx];
-
-            const acc = state.accounts.find(a => a.id === t.accountId);
-            if (acc) {
-                if (t.type === 'expense') acc.balance += Number(t.amount);
-                else acc.balance -= Number(t.amount);
-            }
-
-            state.transactions.splice(idx, 1);
-            saveState();
-            showToast('Транзакция удалена');
-        }
-
-        /* КАЛЕНДАРЬ СМЕН */
-        function renderShiftsCalendar() {
-            const grid = document.getElementById('calendar-grid-days');
-            const logList = document.getElementById('shifts-log-list');
-            if (!grid || !logList) return;
-            grid.innerHTML = ''; logList.innerHTML = '';
-
-            const date = state.currentCalendarDate;
-            const year = date.getFullYear();
-            const month = date.getMonth();
-
-            document.getElementById('calendar-month-title').innerText = date.toLocaleString('ru', { month: 'long', year: 'numeric' });
-
-            const firstDayIndex = new Date(year, month, 1).getDay() || 7;
-            const totalDays = new Date(year, month + 1, 0).getDate();
-
-            let shiftCount = 0;
-            let shiftEarningsTotal = 0;
-            let offCount = 0;
-
-            if (state.shifts.length === 0) {
-                logList.innerHTML = `<div class="p-4 text-xs text-slate-400 text-center">Журнал смен пуст</div>`;
-            }
-
-            state.shifts.forEach(s => {
-                shiftCount++;
-                if (s.earnings) shiftEarningsTotal += Number(s.earnings);
-                if (s.type === 'Off' || s.type === 'Vacation') offCount++;
-
-                logList.innerHTML += `
-                    <div class="p-4 flex items-center justify-between text-xs">
-                        <div class="flex items-center gap-3">
-                            <span class="px-2.5 py-1 rounded-lg font-bold text-[10px] bg-brand-500/10 text-brand-500">${s.type}</span>
-                            <div><b>${s.note || 'Смена'}</b><p class="text-slate-400 text-[10px]">${s.date}</p></div>
-                        </div>
-                        <div class="flex items-center gap-3">
-                            <span class="font-extrabold text-emerald-500">${s.earnings ? '+' + formatMoney(s.earnings) : '—'}</span>
-                            <button onclick="deleteShift('${s.id}')" class="text-slate-400 hover:text-brand-500 cursor-pointer" title="Удалить смену"><i class="fa-solid fa-trash text-xs"></i></button>
-                        </div>
-                    </div>
-                `;
-            });
-
-            document.getElementById('shift-count-badge').innerText = shiftCount + ' смен';
-            document.getElementById('shift-earnings-badge').innerText = formatMoney(shiftEarningsTotal);
-            document.getElementById('shift-off-badge').innerText = offCount + ' дней';
-
-            for (let i = 1; i < firstDayIndex; i++) {
-                grid.innerHTML += `<div class="h-20 bg-slate-100/50 dark:bg-darkbg/30 rounded-xl opacity-30"></div>`;
-            }
-
-            for (let d = 1; d <= totalDays; d++) {
-                const dStr = `${year}-${String(month+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
-                const shift = state.shifts.find(s => s.date === dStr);
-
-                let badgeClass = 'bg-slate-100 dark:bg-darkbg text-slate-600 dark:text-slate-300';
-                let label = '';
-
-                if (shift) {
-                    if (shift.type === 'Night') { badgeClass = 'bg-rose-600 text-white font-bold'; label = 'Night'; }
-                    else if (shift.type === 'Late') { badgeClass = 'bg-emerald-600 text-white font-bold'; label = 'Late'; }
-                    else if (shift.type === 'Day') { badgeClass = 'bg-sky-600 text-white font-bold'; label = 'Day'; }
-                    else if (shift.type === 'Morning') { badgeClass = 'bg-amber-600 text-white font-bold'; label = 'Morning'; }
-                    else if (shift.type === 'Off') { badgeClass = 'bg-cyan-700 text-white font-bold'; label = 'Off'; }
-                    else if (shift.type === 'Vacation') { badgeClass = 'bg-blue-500 text-white font-bold'; label = 'Vacation'; }
-                }
-
-                grid.innerHTML += `
-                    <div class="h-20 rounded-xl p-1.5 flex flex-col justify-between border border-slate-200 dark:border-darkborder ${badgeClass}">
-                        <span class="text-xs font-semibold">${d}</span>
-                        <span class="text-[9px] truncate text-center rounded px-1 bg-black/20">${label}</span>
-                    </div>
-                `;
-            }
-        }
-
-        function deleteShift(id) {
-            state.shifts = state.shifts.filter(s => s.id !== id);
-            saveState();
-            showToast('Смена удалена из журнала');
-        }
-
-        function handleSaveShift(e) {
-            e.preventDefault();
-            const date = document.getElementById('shift-date-input').value;
-            const type = document.getElementById('shift-type-input').value;
-            const earnings = Number(document.getElementById('shift-earnings-input').value);
-            const note = document.getElementById('shift-note-input').value;
-
-            state.shifts.push({ id: 's_' + Date.now(), date, type, earnings, note });
-            saveState();
-            closeModal('modal-shift');
-            showToast('Смена записана в календарь!');
-            e.target.reset();
-        }
-
-        function changeMonth(dir) {
-            state.currentCalendarDate.setMonth(state.currentCalendarDate.getMonth() + dir);
-            renderShiftsCalendar();
-        }
-
-        /* WISHLIST */
-        function renderWishlist() {
-            const grid = document.getElementById('wishlist-grid');
-            if (!grid) return;
-            grid.innerHTML = '';
-            document.getElementById('dash-wishlist-count').innerText = state.wishlist.length + ' целей';
-
-            if (state.wishlist.length === 0) {
-                grid.innerHTML = `<p class="text-xs text-slate-400 col-span-full">Вишлист пуст. Добавьте свою первую цель.</p>`;
-                return;
-            }
-
-            state.wishlist.forEach(w => {
-                const pct = Math.min(100, Math.round((w.currentAmount / w.targetPrice) * 100));
-                grid.innerHTML += `
-                    <div class="bg-white dark:bg-darkcard rounded-2xl border border-slate-200 dark:border-darkborder overflow-hidden shadow-sm flex flex-col justify-between">
-                        <div class="h-40 bg-slate-100 dark:bg-darkbg relative">
-                            <img src="${w.image}" class="w-full h-full object-cover">
-                            <button onclick="deleteWishlist('${w.id}')" class="absolute top-3 right-3 w-8 h-8 rounded-full bg-black/60 text-white hover:bg-brand-500 flex items-center justify-center cursor-pointer" title="Удалить цель"><i class="fa-solid fa-trash text-xs"></i></button>
-                        </div>
-                        <div class="p-5 space-y-3">
-                            <h3 class="font-bold text-base">${w.title}</h3>
-                            <div class="text-xs text-slate-400">Стоимость: <b class="text-white">${formatMoney(w.targetPrice)}</b></div>
-                            <div class="w-full h-2 bg-slate-100 dark:bg-darkbg rounded-full overflow-hidden">
-                                <div class="bg-brand-500 h-full rounded-full" style="width: ${pct}%"></div>
-                            </div>
-                        </div>
-                    </div>
-                `;
-            });
-        }
-
-        function deleteWishlist(id) {
-            state.wishlist = state.wishlist.filter(w => w.id !== id);
-            saveState();
-            showToast('Цель удалена из вишлиста');
-        }
-
-        function handleSaveWishlist(e) {
-            e.preventDefault();
-            state.wishlist.push({
-                id: 'w_' + Date.now(),
-                title: document.getElementById('wish-title-input').value,
-                targetPrice: Number(document.getElementById('wish-price-input').value),
-                currentAmount: 0,
-                image: document.getElementById('wish-image-input').value || 'https://images.unsplash.com/photo-1523275335684-37898b6baf30?auto=format&fit=crop&w=600&q=80'
-            });
-            saveState();
-            closeModal('modal-wishlist');
-            showToast('Цель добавлена в вишлист!');
-            e.target.reset();
-        }
-
-        /* ANALYTICS WITH PERIOD FILTER */
-        function renderAnalytics() {
-            const period = state.analyticsPeriod;
-            const now = new Date();
-
-            let filteredTransactions = state.transactions.filter(t => {
-                const tDate = new Date(t.date);
-                if (period === 'day') {
-                    return tDate.toDateString() === now.toDateString();
-                } else if (period === 'week') {
-                    const diffTime = Math.abs(now - tDate);
-                    const diffDays = diffTime / (1000 * 60 * 60 * 24);
-                    return diffDays <= 7;
-                } else if (period === 'month') {
-                    return tDate.getMonth() === now.getMonth() && tDate.getFullYear() === now.getFullYear();
-                } else if (period === 'year') {
-                    return tDate.getFullYear() === now.getFullYear();
-                }
-                return true;
-            });
-
-            let inc = 0, exp = 0;
-            const cats = {};
-
-            filteredTransactions.forEach(t => {
-                if (t.type === 'income') inc += Number(t.amount);
-                else {
-                    exp += Number(t.amount);
-                    cats[t.category] = (cats[t.category] || 0) + Number(t.amount);
+            document.querySelectorAll('.nav-btn, .mobile-nav-btn').forEach(btn => {
+                const isActive = btn.getAttribute('data-tab') === tabId;
+                if (isActive) {
+                    btn.classList.add('text-brand-600', 'bg-brand-50', 'dark:bg-brand-950/40', 'dark:text-rose-400');
+                    btn.classList.remove('text-slate-600', 'text-slate-400');
+                } else {
+                    btn.classList.remove('text-brand-600', 'bg-brand-50', 'dark:bg-brand-950/40', 'dark:text-rose-400');
+                    btn.classList.add('text-slate-600', 'dark:text-slate-400');
                 }
             });
 
-            document.getElementById('analytics-period-income').innerText = '+' + formatMoney(inc);
-            document.getElementById('analytics-period-expense').innerText = '-' + formatMoney(exp);
-            document.getElementById('analytics-period-net').innerText = formatMoney(inc - exp);
-
-            const ctxCatEl = document.getElementById('categoriesChart');
-            if (ctxCatEl) {
-                const ctxCat = ctxCatEl.getContext('2d');
-                if (catChart) catChart.destroy();
-                catChart = new Chart(ctxCat, {
-                    type: 'doughnut',
-                    data: {
-                        labels: Object.keys(cats).length ? Object.keys(cats) : ['Нет расходов'],
-                        datasets: [{ data: Object.values(cats).length ? Object.values(cats) : [1], backgroundColor: ['#e53e3e', '#319795', '#d69e2e', '#805ad5', '#3182ce'] }]
-                    },
-                    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom' } } }
-                });
-            }
-
-            const ctxIEEl = document.getElementById('incomeExpenseChart');
-            if (ctxIEEl) {
-                const ctxIE = ctxIEEl.getContext('2d');
-                if (ieChart) ieChart.destroy();
-                ieChart = new Chart(ctxIE, {
-                    type: 'bar',
-                    data: { labels: ['Доход', 'Расход'], datasets: [{ data: [inc, exp], backgroundColor: ['#38a169', '#e53e3e'], borderRadius: 6 }] },
-                    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } }
-                });
-            }
+            if (tabId === 'analytics') renderAnalyticsChart();
+            if (tabId === 'shifts') renderShifts();
         }
 
-        function setAnalyticsPeriod(p) {
-            state.analyticsPeriod = p;
-            document.querySelectorAll('.period-btn').forEach(btn => {
-                btn.className = 'period-btn px-3 py-1.5 text-xs font-bold rounded-lg text-slate-400 cursor-pointer';
-            });
-            document.getElementById(`period-${p}`).className = 'period-btn px-3 py-1.5 text-xs font-bold bg-brand-500 text-white rounded-lg cursor-pointer';
-            renderAnalytics();
+        function toggleDebtsVisibility() {
+            APP_STATE.settings.debtsModuleEnabled = document.getElementById('toggleDebtsModule').checked;
+            saveState();
         }
 
-        /* ИИ СОВЕТНИК */
-        function renderAIMind() {
-            const adviceBox = document.getElementById('ai-advice-container');
-            if (!adviceBox) return;
+        function updateDebtsVisibilityUI() {
+            const isEnabled = APP_STATE.settings.debtsModuleEnabled;
+            document.getElementById('toggleDebtsModule').checked = isEnabled;
+            
+            const navBtn = document.getElementById('navDebtsBtn');
+            const mobileBtn = document.getElementById('mobileDebtsBtn');
 
-            let totalInc = 0, totalExp = 0;
-            state.transactions.forEach(t => {
-                if (t.type === 'income') totalInc += Number(t.amount);
-                else totalExp += Number(t.amount);
-            });
-
-            if (state.transactions.length === 0) {
-                adviceBox.innerHTML = `<p>💡 <b>Совет ИИ:</b> У вас пока нет записанных операций. Добавьте свои доходы и расходы, и искусственный интеллект проанализирует ваш финансовый баланс, дав персональные рекомендации по накоплениям.</p>`;
-                return;
-            }
-
-            let advice = `<p>🤖 <b>Аналитический отчет ИИ MuMind:</b></p>`;
-            if (totalExp > totalInc) {
-                advice += `<p class="text-brand-500 font-semibold mt-2">⚠️ Внимание: Ваши расходы (${formatMoney(totalExp)}) превышают доходы (${formatMoney(totalInc)}). Рекомендуется пересмотреть категории второстепенных трат.</p>`;
+            if (isEnabled) {
+                if (navBtn) navBtn.classList.remove('hidden');
+                if (mobileBtn) mobileBtn.classList.remove('hidden');
             } else {
-                advice += `<p class="text-emerald-500 font-semibold mt-2">✅ Отличная финансовая дисциплина! Доходы покрывают расходы, вы находитесь в плюсе на ${formatMoney(totalInc - totalExp)}. Часть средств советуем отложить в вишлист.</p>`;
+                if (navBtn) navBtn.classList.add('hidden');
+                if (mobileBtn) mobileBtn.classList.add('hidden');
             }
-            adviceBox.innerHTML = advice;
         }
 
-        /* TRANSACTIONS & ACCOUNTS */
-        function handleSaveTransaction(e) {
-            e.preventDefault();
-            const type = document.getElementById('trans-type-input').value;
-            const accountId = document.getElementById('trans-account-select').value;
-            const category = document.getElementById('trans-category-select').value;
-            const amount = Number(document.getElementById('trans-amount-input').value);
-            const note = document.getElementById('trans-note-input').value;
-            const date = document.getElementById('trans-date-input').value;
-
-            const acc = state.accounts.find(a => a.id === accountId);
-            if (!acc) { showToast('Сначала выберите или создайте счет!', 'error'); return; }
-
-            if (type === 'expense') acc.balance -= amount;
-            else acc.balance += amount;
-
-            state.transactions.push({ id: 't_' + Date.now(), type, accountId, category, amount, note, date });
-            saveState();
-            closeModal('modal-transaction');
-            showToast('Операция записана!');
-            e.target.reset();
+        // Render All UI Components
+        function renderAllData() {
+            renderOverviewStats();
+            renderAccounts();
+            renderTransactions();
+            renderGoals();
+            renderDebts();
+            renderShifts();
+            updateDebtsVisibilityUI();
         }
 
-        function handleSaveAccount(e) {
-            e.preventDefault();
-            state.accounts.push({
-                id: 'acc_' + Date.now(),
-                name: document.getElementById('acc-name-input').value,
-                balance: Number(document.getElementById('acc-balance-input').value),
-                gradient: document.getElementById('acc-color-select').value,
-                icon: 'fa-credit-card'
+        // 1. OVERVIEW & BUDGET CALCULATION LOGIC
+        function renderOverviewStats() {
+            let cardCashBalance = 0;
+            let depositBalance = 0;
+
+            APP_STATE.accounts.forEach(acc => {
+                if (acc.type === 'deposit') {
+                    depositBalance += Number(acc.balance);
+                } else {
+                    cardCashBalance += Number(acc.balance);
+                }
             });
+
+            document.getElementById('statTotalBalance').textContent = cardCashBalance.toLocaleString() + ' ₸';
+            document.getElementById('statDepositBalance').textContent = depositBalance.toLocaleString() + ' ₸';
+
+            const now = new Date();
+            let monthIncome = 0;
+            let monthExpense = 0;
+            let todayExpense = 0;
+
+            APP_STATE.transactions.forEach(t => {
+                const tDate = new Date(t.date);
+                if (tDate.getMonth() === now.getMonth() && tDate.getFullYear() === now.getFullYear()) {
+                    if (t.type === 'income') monthIncome += Number(t.amount);
+                    if (t.type === 'expense') monthExpense += Number(t.amount);
+                }
+                if (tDate.toDateString() === now.toDateString() && t.type === 'expense') {
+                    todayExpense += Number(t.amount);
+                }
+            });
+
+            document.getElementById('statMonthlyIncome').textContent = monthIncome.toLocaleString() + ' ₸';
+            document.getElementById('statMonthlyExpense').textContent = monthExpense.toLocaleString() + ' ₸';
+
+            document.getElementById('budgetPeriodSelect').value = APP_STATE.budgetLimit.period;
+            document.getElementById('budgetLimitInput').value = APP_STATE.budgetLimit.amount || '';
+
+            let totalLimit = Number(APP_STATE.budgetLimit.amount);
+            let dailyNorm = 0;
+
+            if (totalLimit > 0) {
+                if (APP_STATE.budgetLimit.period === 'day') {
+                    dailyNorm = totalLimit;
+                } else if (APP_STATE.budgetLimit.period === 'week') {
+                    dailyNorm = totalLimit / 7;
+                } else {
+                    const daysInMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate();
+                    dailyNorm = totalLimit / daysInMonth;
+                }
+            }
+
+            const canSpendToday = Math.max(0, dailyNorm - todayExpense);
+
+            document.getElementById('dailySpendLimitDisplay').textContent = Math.round(canSpendToday).toLocaleString() + ' ₸';
+            document.getElementById('todaySpentVal').textContent = todayExpense.toLocaleString() + ' ₸';
+
+            const progressPct = dailyNorm > 0 ? Math.min(100, (todayExpense / dailyNorm) * 100) : 0;
+            document.getElementById('budgetProgressBar').style.width = progressPct + '%';
+        }
+
+        function updateBudgetLimits() {
+            APP_STATE.budgetLimit.period = document.getElementById('budgetPeriodSelect').value;
+            APP_STATE.budgetLimit.amount = Number(document.getElementById('budgetLimitInput').value) || 0;
             saveState();
-            closeModal('modal-add-account');
-            showToast('Счет добавлен!');
+        }
+
+        // 2. ACCOUNTS
+        function renderAccounts() {
+            const grid = document.getElementById('accountsGrid');
+            const miniList = document.getElementById('miniAccountsList');
+            grid.innerHTML = '';
+            miniList.innerHTML = '';
+
+            if (APP_STATE.accounts.length === 0) {
+                grid.innerHTML = '<p class="col-span-full text-center py-8 text-slate-400 text-sm">Счета еще не добавлены. Нажмите "+ Новый Счет".</p>';
+                miniList.innerHTML = '<p class="text-xs text-slate-400 text-center py-2">Счетов нет</p>';
+                return;
+            }
+
+            APP_STATE.accounts.forEach(acc => {
+                const isDeposit = acc.type === 'deposit';
+                const icon = isDeposit ? 'fa-vault' : (acc.type === 'card' ? 'fa-credit-card' : 'fa-money-bill-wave');
+                const badgeColor = isDeposit ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-400' : 'bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300';
+                const labelType = isDeposit ? 'Депозит' : (acc.type === 'card' ? 'Карта' : 'Наличные');
+
+                const card = document.createElement('div');
+                card.className = "bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-5 rounded-3xl shadow-sm space-y-3 relative";
+                card.innerHTML = `
+                    <div class="flex items-center justify-between">
+                        <span class="px-2.5 py-1 rounded-full text-xs font-bold ${badgeColor}">
+                            <i class="fa-solid ${icon} mr-1"></i> ${labelType}
+                        </span>
+                        <button onclick="deleteAccount('${acc.id}')" class="text-slate-400 hover:text-rose-500 text-xs"><i class="fa-solid fa-trash"></i></button>
+                    </div>
+                    <div>
+                        <h4 class="font-bold text-slate-800 dark:text-slate-200">${acc.name}</h4>
+                        <p class="text-2xl font-extrabold text-slate-900 dark:text-white mt-1">${Number(acc.balance).toLocaleString()} ₸</p>
+                    </div>
+                `;
+                grid.appendChild(card);
+
+                const mini = document.createElement('div');
+                mini.className = "flex items-center justify-between p-3 rounded-2xl bg-slate-50 dark:bg-slate-800/40";
+                mini.innerHTML = `
+                    <div class="flex items-center gap-3">
+                        <div class="w-8 h-8 rounded-xl bg-brand-100 dark:bg-brand-950/60 text-brand-600 dark:text-rose-400 flex items-center justify-center">
+                            <i class="fa-solid ${icon} text-xs"></i>
+                        </div>
+                        <span class="text-sm font-semibold">${acc.name}</span>
+                    </div>
+                    <span class="text-sm font-bold">${Number(acc.balance).toLocaleString()} ₸</span>
+                `;
+                miniList.appendChild(mini);
+            });
+        }
+
+        function openAccountModal() {
+            document.getElementById('modalAccount').classList.remove('hidden');
+        }
+
+        function handleAccountSubmit(e) {
+            e.preventDefault();
+            const name = document.getElementById('accName').value;
+            const type = document.getElementById('accType').value;
+            const balance = Number(document.getElementById('accBalance').value);
+
+            APP_STATE.accounts.push({ id: Date.now().toString(), name, type, balance });
+            saveState();
+            closeModal('modalAccount');
             e.target.reset();
+            showToast('Счет добавлен');
         }
 
         function deleteAccount(id) {
-            state.accounts = state.accounts.filter(a => a.id !== id);
-            saveState();
-            showToast('Счет удален');
+            if (confirm('Удалить этот счет?')) {
+                APP_STATE.accounts = APP_STATE.accounts.filter(a => a.id !== id);
+                saveState();
+            }
         }
 
-        function setTransactionType(type) {
-            document.getElementById('trans-type-input').value = type;
-            const exp = document.getElementById('trans-type-expense');
-            const inc = document.getElementById('trans-type-income');
-            if (type === 'expense') {
-                exp.className = 'py-2 text-xs font-bold rounded-lg bg-brand-500 text-white cursor-pointer';
-                inc.className = 'py-2 text-xs font-bold rounded-lg text-slate-400 cursor-pointer';
+        // 3. TRANSACTIONS MANAGEMENT (Add, Edit, Delete)
+        function renderTransactions() {
+            const recentList = document.getElementById('recentTransactionsList');
+            const fullList = document.getElementById('fullTransactionsList');
+            recentList.innerHTML = '';
+            if (fullList) fullList.innerHTML = '';
+
+            if (APP_STATE.transactions.length === 0) {
+                recentList.innerHTML = '<p class="text-sm text-slate-400 py-4 text-center">История операций пуста</p>';
+                if (fullList) fullList.innerHTML = '<p class="text-sm text-slate-400 py-4 text-center">История операций пуста</p>';
+                return;
+            }
+
+            const sorted = [...APP_STATE.transactions].sort((a, b) => new Date(b.date) - new Date(a.date));
+
+            sorted.forEach((t, index) => {
+                const acc = APP_STATE.accounts.find(a => a.id === t.accountId);
+                const isIncome = t.type === 'income';
+
+                const item = document.createElement('div');
+                item.className = "flex items-center justify-between p-3 rounded-2xl bg-slate-50 dark:bg-slate-800/40 border border-slate-100 dark:border-slate-800/50 group";
+                item.innerHTML = `
+                    <div class="flex items-center gap-3">
+                        <div class="w-9 h-9 rounded-xl ${isIncome ? 'bg-emerald-100 text-emerald-600 dark:bg-emerald-950/60 dark:text-emerald-400' : 'bg-rose-100 text-rose-600 dark:bg-rose-950/60 dark:text-rose-400'} flex items-center justify-center text-sm font-bold">
+                            <i class="fa-solid ${isIncome ? 'fa-arrow-down-left' : 'fa-arrow-up-right'}"></i>
+                        </div>
+                        <div>
+                            <p class="font-semibold text-sm leading-tight">${t.category} ${t.note ? `<span class="text-xs text-slate-400">(${t.note})</span>` : ''}</p>
+                            <p class="text-[11px] text-slate-400 mt-0.5">${acc ? acc.name : 'Счет'} • ${new Date(t.date).toLocaleDateString()}</p>
+                        </div>
+                    </div>
+                    <div class="flex items-center gap-3">
+                        <span class="font-extrabold text-sm ${isIncome ? 'text-emerald-600 dark:text-emerald-400' : 'text-slate-900 dark:text-white'}">
+                            ${isIncome ? '+' : '-'}${Number(t.amount).toLocaleString()} ₸
+                        </span>
+                        <div class="flex items-center gap-1 opacity-80 md:opacity-0 group-hover:opacity-100 transition">
+                            <button onclick="editTransaction('${t.id}')" class="p-1.5 text-slate-400 hover:text-brand-500 text-xs"><i class="fa-solid fa-pen"></i></button>
+                            <button onclick="deleteTransaction('${t.id}')" class="p-1.5 text-slate-400 hover:text-rose-500 text-xs"><i class="fa-solid fa-trash"></i></button>
+                        </div>
+                    </div>
+                `;
+
+                if (index < 5) recentList.appendChild(item.cloneNode(true));
+                if (fullList) fullList.appendChild(item);
+            });
+        }
+
+        function openTransactionModal(type) {
+            if (APP_STATE.accounts.length === 0) {
+                alert('Сначала добавьте хотя бы один счет!');
+                switchTab('accounts');
+                openAccountModal();
+                return;
+            }
+
+            document.getElementById('txId').value = '';
+            document.getElementById('txType').value = type;
+            document.getElementById('txAmount').value = '';
+            document.getElementById('txNote').value = '';
+            document.getElementById('txModalTitle').textContent = type === 'income' ? 'Добавить Доход' : 'Добавить Расход';
+
+            const selectAcc = document.getElementById('txAccountSelect');
+            selectAcc.innerHTML = APP_STATE.accounts.map(a => `<option value="${a.id}">${a.name} (${a.balance.toLocaleString()} ₸)</option>`).join('');
+
+            const expBox = document.getElementById('txCategoryExpenseBox');
+            const incBox = document.getElementById('txCategoryIncomeBox');
+
+            if (type === 'income') {
+                expBox.classList.add('hidden');
+                incBox.classList.remove('hidden');
+                document.getElementById('txCategorySelectIncome').value = 'Зарплата';
+                toggleCustomIncomeCategory();
             } else {
-                inc.className = 'py-2 text-xs font-bold rounded-lg bg-emerald-500 text-white cursor-pointer';
-                exp.className = 'py-2 text-xs font-bold rounded-lg text-slate-400 cursor-pointer';
+                expBox.classList.remove('hidden');
+                incBox.classList.add('hidden');
+            }
+
+            document.getElementById('modalTransaction').classList.remove('hidden');
+        }
+
+        function toggleCustomIncomeCategory() {
+            const val = document.getElementById('txCategorySelectIncome').value;
+            const customBox = document.getElementById('txCustomIncomeContainer');
+            if (val === 'custom') {
+                customBox.classList.remove('hidden');
+            } else {
+                customBox.classList.add('hidden');
             }
         }
 
-        /* AUTH PROFILE */
-        function openAuthModal() {
-            document.getElementById('auth-username-input').value = state.user.name || '';
-            document.getElementById('auth-email-input').value = state.user.email || '';
-            document.getElementById('auth-phone-input').value = state.user.phone || '';
-            openModal('modal-auth');
-        }
-
-        function handleAuthSubmit(e) {
+        function handleTransactionSubmit(e) {
             e.preventDefault();
-            state.user.name = document.getElementById('auth-username-input').value;
-            state.user.email = document.getElementById('auth-email-input').value;
-            state.user.phone = document.getElementById('auth-phone-input').value;
+            const txId = document.getElementById('txId').value;
+            const type = document.getElementById('txType').value;
+            const amount = Number(document.getElementById('txAmount').value);
+            const accountId = document.getElementById('txAccountSelect').value;
+            const note = document.getElementById('txNote').value;
+
+            let category = '';
+            if (type === 'expense') {
+                category = document.getElementById('txCategorySelectExpense').value;
+            } else {
+                const incCategoryVal = document.getElementById('txCategorySelectIncome').value;
+                if (incCategoryVal === 'custom') {
+                    category = document.getElementById('txCustomIncomeInput').value.trim() || 'Доход';
+                } else {
+                    category = incCategoryVal;
+                }
+            }
+
+            const acc = APP_STATE.accounts.find(a => a.id === accountId);
+            if (!acc) return;
+
+            if (txId) {
+                // Editing existing transaction: Revert previous balance impact first
+                const existingTx = APP_STATE.transactions.find(t => t.id === txId);
+                if (existingTx) {
+                    const prevAcc = APP_STATE.accounts.find(a => a.id === existingTx.accountId);
+                    if (prevAcc) {
+                        if (existingTx.type === 'expense') prevAcc.balance += Number(existingTx.amount);
+                        else prevAcc.balance -= Number(existingTx.amount);
+                    }
+                    existingTx.type = type;
+                    existingTx.amount = amount;
+                    existingTx.accountId = accountId;
+                    existingTx.category = category;
+                    existingTx.note = note;
+                }
+            } else {
+                // New Transaction
+                APP_STATE.transactions.push({
+                    id: Date.now().toString(),
+                    type,
+                    amount,
+                    accountId,
+                    category,
+                    note,
+                    date: new Date().toISOString()
+                });
+            }
+
+            // Apply new balance change
+            if (type === 'expense') {
+                acc.balance -= amount;
+            } else {
+                acc.balance += amount;
+            }
+
             saveState();
-            updateUserDisplay();
-            closeModal('modal-auth');
-            showToast('Профиль успешно обновлен!');
+            closeModal('modalTransaction');
+            e.target.reset();
+            showToast(txId ? 'Операция изменена!' : 'Операция записана!');
         }
 
-        function updateUserDisplay() {
-            document.getElementById('user-display-name').innerText = state.user.name && state.user.name !== 'Гость' ? state.user.name : 'Войти';
-        }
+        function editTransaction(id) {
+            const t = APP_STATE.transactions.find(tx => tx.id === id);
+            if (!t) return;
 
-        function openTransactionModal() {
-            const modal = document.getElementById('modal-transaction');
-            if (modal) {
-                populateDropdowns();
-                modal.classList.remove('hidden');
-                modal.classList.add('flex');
+            openTransactionModal(t.type);
+            document.getElementById('txId').value = t.id;
+            document.getElementById('txAmount').value = t.amount;
+            document.getElementById('txAccountSelect').value = t.accountId;
+            document.getElementById('txNote').value = t.note || '';
+
+            if (t.type === 'expense') {
+                document.getElementById('txCategorySelectExpense').value = t.category;
+            } else {
+                const incSelect = document.getElementById('txCategorySelectIncome');
+                if (['Зарплата', 'Стипендия', 'Подработка'].includes(t.category)) {
+                    incSelect.value = t.category;
+                    document.getElementById('txCustomIncomeContainer').classList.add('hidden');
+                } else {
+                    incSelect.value = 'custom';
+                    document.getElementById('txCustomIncomeContainer').classList.remove('hidden');
+                    document.getElementById('txCustomIncomeInput').value = t.category;
+                }
             }
         }
 
-        function openModal(id) { 
-            const modal = document.getElementById(id);
-            if (modal) {
-                modal.classList.add('flex'); 
-                modal.classList.remove('hidden'); 
+        function deleteTransaction(id) {
+            const t = APP_STATE.transactions.find(tx => tx.id === id);
+            if (!t) return;
+
+            if (confirm('Удалить эту операцию?')) {
+                const acc = APP_STATE.accounts.find(a => a.id === t.accountId);
+                if (acc) {
+                    if (t.type === 'expense') acc.balance += Number(t.amount);
+                    else acc.balance -= Number(t.amount);
+                }
+                APP_STATE.transactions = APP_STATE.transactions.filter(tx => tx.id !== id);
+                saveState();
+                showToast('Операция удалена');
             }
         }
 
-        function closeModal(id) { 
-            const modal = document.getElementById(id);
-            if (modal) {
-                modal.classList.add('hidden'); 
-                modal.classList.remove('flex'); 
+        // 4. WISHLIST & GOALS
+        function renderGoals() {
+            const grid = document.getElementById('goalsGrid');
+            grid.innerHTML = '';
+
+            if (APP_STATE.goals.length === 0) {
+                grid.innerHTML = '<p class="col-span-full text-center py-8 text-slate-400 text-sm">У вас пока нет сохраненных целей. Нажмите "+ Новая цель накоплений".</p>';
+                return;
+            }
+
+            APP_STATE.goals.forEach(goal => {
+                const pct = Math.min(100, Math.round((goal.current / goal.target) * 100));
+                const linkedAccount = APP_STATE.accounts.find(a => a.id === goal.accountId);
+                const accName = linkedAccount ? linkedAccount.name : 'Счет';
+
+                const card = document.createElement('div');
+                card.className = "bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-6 rounded-3xl space-y-4 shadow-sm relative";
+                card.innerHTML = `
+                    <div class="flex items-start justify-between">
+                        <div>
+                            <h3 class="font-bold text-lg">${goal.title}</h3>
+                            <p class="text-xs text-slate-400 flex items-center gap-1 mt-0.5">
+                                <i class="fa-solid fa-vault text-brand-500"></i> Где копить: <span class="font-semibold text-slate-600 dark:text-slate-300">${accName}</span>
+                            </p>
+                        </div>
+                        <span class="px-3 py-1 rounded-full text-xs font-bold bg-brand-50 text-brand-600 dark:bg-brand-950/60 dark:text-rose-400">
+                            ${pct}% Накоплено
+                        </span>
+                    </div>
+
+                    <div class="space-y-1">
+                        <div class="flex justify-between text-xs font-semibold">
+                            <span>Накоплено: ${Number(goal.current).toLocaleString()} ₸</span>
+                            <span class="text-slate-400">Цель: ${Number(goal.target).toLocaleString()} ₸</span>
+                        </div>
+                        <div class="w-full bg-slate-100 dark:bg-slate-800 h-3 rounded-full overflow-hidden">
+                            <div class="bg-gradient-to-r from-brand-600 to-rose-400 h-full rounded-full transition-all duration-300" style="width: ${pct}%"></div>
+                        </div>
+                    </div>
+
+                    <div class="flex items-center gap-2 pt-2">
+                        <button onclick="openDepositGoalModal('${goal.id}')" class="flex-1 py-2.5 bg-brand-600 hover:bg-brand-700 text-white text-xs font-bold rounded-xl transition flex items-center justify-center gap-1">
+                            <i class="fa-solid fa-piggy-bank"></i> Отложить денег
+                        </button>
+                        <button onclick="deleteGoal('${goal.id}')" class="p-2.5 text-slate-400 hover:text-rose-500 rounded-xl border border-slate-200 dark:border-slate-800"><i class="fa-solid fa-trash"></i></button>
+                    </div>
+                `;
+                grid.appendChild(card);
+            });
+        }
+
+        function openGoalModal() {
+            if (APP_STATE.accounts.length === 0) {
+                alert('Сначала создайте хотя бы один счет!');
+                switchTab('accounts');
+                openAccountModal();
+                return;
+            }
+            const select = document.getElementById('goalAccountSelect');
+            select.innerHTML = APP_STATE.accounts.map(a => `<option value="${a.id}">${a.name} (${a.type === 'deposit' ? 'Депозит' : 'Карта/Наличные'})</option>`).join('');
+            document.getElementById('modalGoal').classList.remove('hidden');
+        }
+
+        function handleGoalSubmit(e) {
+            e.preventDefault();
+            const title = document.getElementById('goalTitle').value;
+            const target = Number(document.getElementById('goalTargetAmount').value);
+            const accountId = document.getElementById('goalAccountSelect').value;
+
+            APP_STATE.goals.push({ id: Date.now().toString(), title, target, current: 0, accountId });
+            saveState();
+            closeModal('modalGoal');
+            e.target.reset();
+            showToast('Цель создана');
+        }
+
+        function openDepositGoalModal(goalId) {
+            const goal = APP_STATE.goals.find(g => g.id === goalId);
+            if (!goal) return;
+
+            document.getElementById('depositGoalId').value = goal.id;
+            document.getElementById('depositGoalNameDisplay').textContent = `Цель: ${goal.title}`;
+
+            const select = document.getElementById('depositFromAccountSelect');
+            select.innerHTML = APP_STATE.accounts.map(a => `<option value="${a.id}">${a.name} (${a.balance.toLocaleString()} ₸)</option>`).join('');
+
+            document.getElementById('modalDepositGoal').classList.remove('hidden');
+        }
+
+        function handleDepositGoalSubmit(e) {
+            e.preventDefault();
+            const goalId = document.getElementById('depositGoalId').value;
+            const amount = Number(document.getElementById('depositGoalAmount').value);
+            const fromAccId = document.getElementById('depositFromAccountSelect').value;
+
+            const goal = APP_STATE.goals.find(g => g.id === goalId);
+            const fromAcc = APP_STATE.accounts.find(a => a.id === fromAccId);
+
+            if (fromAcc && fromAcc.balance >= amount) {
+                fromAcc.balance -= amount;
+                goal.current += amount;
+
+                const targetAcc = APP_STATE.accounts.find(a => a.id === goal.accountId);
+                if (targetAcc && targetAcc.id !== fromAcc.id) {
+                    targetAcc.balance += amount;
+                }
+
+                saveState();
+                closeModal('modalDepositGoal');
+                showToast('Средства отложены!');
+            } else {
+                alert('Недостаточно средств на счете!');
             }
         }
 
-        function switchTab(id) {
-            document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
-            document.querySelectorAll('.tab-btn').forEach(btn => btn.className = 'tab-btn px-4 py-2 text-sm font-semibold rounded-lg text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-darkbg whitespace-nowrap cursor-pointer');
-            const targetView = document.getElementById(`view-${id}`);
-            const targetBtn = document.getElementById(`tab-btn-${id}`);
-            if (targetView) targetView.classList.remove('hidden');
-            if (targetBtn) targetBtn.className = 'tab-btn px-4 py-2 text-sm font-semibold rounded-lg text-brand-500 bg-brand-500/10 whitespace-nowrap cursor-pointer';
+        function deleteGoal(id) {
+            if (confirm('Удалить эту цель?')) {
+                APP_STATE.goals = APP_STATE.goals.filter(g => g.id !== id);
+                saveState();
+            }
         }
 
-        function showToast(msg, type='success') {
-            const container = document.getElementById('toast-container');
-            if (!container) return;
+        // 5. DEBTS MODULE
+        function renderDebts() {
+            const grid = document.getElementById('debtsGrid');
+            grid.innerHTML = '';
+
+            if (APP_STATE.debts.length === 0) {
+                grid.innerHTML = '<p class="col-span-full text-center py-8 text-slate-400 text-sm">Список долгов пуст. Нажмите "+ Добавить долг".</p>';
+                return;
+            }
+
+            APP_STATE.debts.forEach(debt => {
+                const isPaid = debt.paid;
+                const dueDate = new Date(debt.dueDate);
+                const diffTime = dueDate - new Date();
+                const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+                const card = document.createElement('div');
+                card.className = `bg-white dark:bg-slate-900 border ${isPaid ? 'border-emerald-300 dark:border-emerald-800' : 'border-slate-200 dark:border-slate-800'} p-5 rounded-3xl space-y-3 relative shadow-sm opacity-${isPaid ? '60' : '100'}`;
+                card.innerHTML = `
+                    <div class="flex items-center justify-between">
+                        <span class="text-xs font-bold px-2.5 py-1 rounded-full ${isPaid ? 'bg-emerald-100 text-emerald-600' : (diffDays <= 3 ? 'bg-rose-100 text-rose-600 animate-pulse' : 'bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300')}">
+                            ${isPaid ? 'Погашено' : (diffDays < 0 ? 'Просрочено!' : `Осталось дней: ${diffDays}`)}
+                        </span>
+                        <button onclick="deleteDebt('${debt.id}')" class="text-slate-400 hover:text-rose-500 text-xs"><i class="fa-solid fa-trash"></i></button>
+                    </div>
+                    <div>
+                        <h4 class="font-bold text-slate-800 dark:text-slate-200">${debt.title}</h4>
+                        <p class="text-xl font-extrabold text-rose-600 dark:text-rose-400 mt-1">${Number(debt.amount).toLocaleString()} ₸</p>
+                        <p class="text-xs text-slate-400 mt-1">Вернуть до: ${debt.dueDate}</p>
+                    </div>
+                    ${!isPaid ? `
+                        <button onclick="payOffDebt('${debt.id}')" class="w-full py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded-xl transition">
+                            <i class="fa-solid fa-check-circle mr-1"></i> Отметить как погашенный
+                        </button>
+                    ` : ''}
+                `;
+                grid.appendChild(card);
+            });
+        }
+
+        function openDebtModal() {
+            document.getElementById('modalDebt').classList.remove('hidden');
+        }
+
+        function handleDebtSubmit(e) {
+            e.preventDefault();
+            const title = document.getElementById('debtTitle').value;
+            const amount = Number(document.getElementById('debtAmount').value);
+            const dueDate = document.getElementById('debtDueDate').value;
+
+            APP_STATE.debts.push({ id: Date.now().toString(), title, amount, dueDate, paid: false });
+            saveState();
+            closeModal('modalDebt');
+            e.target.reset();
+            showToast('Запись о долге сохранена');
+        }
+
+        function payOffDebt(id) {
+            const debt = APP_STATE.debts.find(d => d.id === id);
+            if (debt) {
+                debt.paid = true;
+                saveState();
+                showToast('Долг погашен!');
+            }
+        }
+
+        function deleteDebt(id) {
+            if (confirm('Удалить эту запись долга?')) {
+                APP_STATE.debts = APP_STATE.debts.filter(d => d.id !== id);
+                saveState();
+            }
+        }
+
+        // 6. SHIFTS CALENDAR
+        function renderShifts() {
+            const year = currentCalendarDate.getFullYear();
+            const month = currentCalendarDate.getMonth();
+
+            const monthNames = [
+                'январь', 'февраль', 'март', 'апрель', 'май', 'июнь',
+                'июль', 'август', 'сентябрь', 'октябрь', 'ноябрь', 'декабрь'
+            ];
+
+            document.getElementById('calendarMonthYearDisplay').textContent = `${monthNames[month]} ${year} г.`;
+
+            let totalShiftsCount = 0;
+            let totalEarnedSum = 0;
+            let totalOffDays = 0;
+
+            APP_STATE.shifts.forEach(s => {
+                const d = new Date(s.date);
+                if (d.getMonth() === month && d.getFullYear() === year) {
+                    if (s.type === 'Off' || s.type === 'Vacation') {
+                        totalOffDays++;
+                    } else {
+                        totalShiftsCount++;
+                        totalEarnedSum += Number(s.pay || 0);
+                    }
+                }
+            });
+
+            document.getElementById('shiftStatCount').textContent = `${totalShiftsCount} смен`;
+            document.getElementById('shiftStatEarned').textContent = `${totalEarnedSum.toLocaleString()} ₸`;
+            document.getElementById('shiftStatOff').textContent = `${totalOffDays} дней`;
+
+            const grid = document.getElementById('calendarDaysGrid');
+            grid.innerHTML = '';
+
+            const firstDay = new Date(year, month, 1);
+            let startingDay = firstDay.getDay() - 1;
+            if (startingDay === -1) startingDay = 6;
+
+            const lastDate = new Date(year, month + 1, 0).getDate();
+
+            for (let i = 0; i < startingDay; i++) {
+                const emptyCell = document.createElement('div');
+                emptyCell.className = "min-h-[70px] md:min-h-[90px] bg-slate-100/40 dark:bg-slate-900/40 rounded-2xl border border-transparent";
+                grid.appendChild(emptyCell);
+            }
+
+            for (let dateNum = 1; dateNum <= lastDate; dateNum++) {
+                const formattedDateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(dateNum).padStart(2, '0')}`;
+                
+                const dayShifts = APP_STATE.shifts.filter(s => s.date === formattedDateStr);
+
+                const dayCell = document.createElement('div');
+                dayCell.className = "min-h-[70px] md:min-h-[90px] bg-slate-50 dark:bg-slate-800/50 rounded-2xl border border-slate-200/60 dark:border-slate-800/80 p-1.5 flex flex-col justify-between transition hover:border-rose-400 cursor-pointer relative group";
+                dayCell.onclick = () => openShiftModalWithDate(formattedDateStr);
+
+                let shiftsBadgesHTML = '';
+                dayShifts.forEach(shift => {
+                    const info = SHIFT_TYPES_INFO[shift.type] || SHIFT_TYPES_INFO['Day'];
+                    shiftsBadgesHTML += `
+                        <div class="mt-1 px-1.5 py-1 rounded-xl text-[10px] font-bold border ${info.bg} flex items-center justify-between gap-1 shadow-sm overflow-hidden" title="${shift.note || info.label}">
+                            <span class="truncate">${info.icon} ${shift.type}</span>
+                            ${shift.pay > 0 ? `<span class="text-[9px] opacity-90">${shift.pay}₸</span>` : ''}
+                        </div>
+                    `;
+                });
+
+                dayCell.innerHTML = `
+                    <div class="flex items-center justify-between">
+                        <span class="text-xs font-bold text-slate-700 dark:text-slate-300 ml-1">${dateNum}</span>
+                        ${dayShifts.length > 0 ? `<button onclick="event.stopPropagation(); deleteShiftDate('${formattedDateStr}')" class="opacity-0 group-hover:opacity-100 text-[10px] text-slate-400 hover:text-rose-500"><i class="fa-solid fa-trash"></i></button>` : ''}
+                    </div>
+                    <div class="flex-1 overflow-y-auto">
+                        ${shiftsBadgesHTML}
+                    </div>
+                `;
+
+                grid.appendChild(dayCell);
+            }
+        }
+
+        function changeCalendarMonth(delta) {
+            currentCalendarDate.setMonth(currentCalendarDate.getMonth() + delta);
+            renderShifts();
+        }
+
+        function openShiftModal() {
+            const todayStr = new Date().toISOString().split('T')[0];
+            openShiftModalWithDate(todayStr);
+        }
+
+        function openShiftModalWithDate(dateStr) {
+            document.getElementById('shiftDate').value = dateStr;
+            const selectAcc = document.getElementById('shiftTargetAccount');
+            selectAcc.innerHTML = `<option value="">Не зачислять на баланс</option>` + APP_STATE.accounts.map(a => `<option value="${a.id}">${a.name} (${a.balance.toLocaleString()} ₸)</option>`).join('');
+            document.getElementById('modalShift').classList.remove('hidden');
+        }
+
+        function handleShiftSubmit(e) {
+            e.preventDefault();
+            const date = document.getElementById('shiftDate').value;
+            const type = document.getElementById('shiftType').value;
+            const pay = Number(document.getElementById('shiftPay').value) || 0;
+            const targetAccId = document.getElementById('shiftTargetAccount').value;
+            const note = document.getElementById('shiftNote').value;
+
+            APP_STATE.shifts.push({ id: Date.now().toString(), date, type, pay, note });
+
+            if (targetAccId && pay > 0) {
+                const acc = APP_STATE.accounts.find(a => a.id === targetAccId);
+                if (acc) {
+                    acc.balance += pay;
+                    APP_STATE.transactions.push({
+                        id: Date.now().toString(),
+                        type: 'income',
+                        amount: pay,
+                        accountId: targetAccId,
+                        category: 'Зарплата',
+                        note: `Смена (${type}): ${note || 'Доход от подработки'}`,
+                        date: new Date(date).toISOString()
+                    });
+                }
+            }
+
+            saveState();
+            closeModal('modalShift');
+            showToast('Смена отмечена!');
+            e.target.reset();
+        }
+
+        function deleteShiftDate(dateStr) {
+            if (confirm(`Удалить отметку смены?`)) {
+                APP_STATE.shifts = APP_STATE.shifts.filter(s => s.date !== dateStr);
+                saveState();
+            }
+        }
+
+        // 7. ANALYTICS CHART
+        function renderAnalyticsChart() {
+            const chartCanvas = document.getElementById('expenseChart');
+            if (!chartCanvas) return;
+            const ctx = chartCanvas.getContext('2d');
+            
+            const categoryTotals = {};
+            APP_STATE.transactions.filter(t => t.type === 'expense').forEach(t => {
+                categoryTotals[t.category] = (categoryTotals[t.category] || 0) + Number(t.amount);
+            });
+
+            const labels = Object.keys(categoryTotals);
+            const data = Object.values(categoryTotals);
+
+            if (expenseChartInstance) expenseChartInstance.destroy();
+
+            expenseChartInstance = new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: labels.length ? labels : ['Расходов нет'],
+                    datasets: [{
+                        data: data.length ? data : [1],
+                        backgroundColor: ['#e11d48', '#f43f5e', '#fb7185', '#fda4af', '#e2e8f0', '#94a3b8']
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: { position: 'bottom', labels: { boxWidth: 12 } }
+                    }
+                }
+            });
+        }
+
+        // 8. USER PROFILE & NOTIFICATIONS
+        function initUserProfile() {
+            document.getElementById('settingUserName').value = APP_STATE.user.name;
+            document.getElementById('userNameDisplay').textContent = APP_STATE.user.name;
+            document.getElementById('userAvatar').textContent = APP_STATE.user.name.charAt(0).toUpperCase();
+
+            document.getElementById('notifMorning').checked = APP_STATE.settings.notifMorning;
+            document.getElementById('notifDebts').checked = APP_STATE.settings.notifDebts;
+        }
+
+        function saveUserProfile() {
+            const name = document.getElementById('settingUserName').value;
+            if (name) {
+                APP_STATE.user.name = name;
+                saveState();
+                initUserProfile();
+                showToast('Профиль сохранен');
+            }
+        }
+
+        function saveNotificationSettings() {
+            APP_STATE.settings.notifMorning = document.getElementById('notifMorning').checked;
+            APP_STATE.settings.notifDebts = document.getElementById('notifDebts').checked;
+            saveState();
+        }
+
+        function checkNotifications() {
+            const banner = document.getElementById('notificationAlertBanner');
+            const alertText = document.getElementById('notificationAlertText');
+
+            let alerts = [];
+
+            if (APP_STATE.settings.notifMorning) {
+                alerts.push("Напоминание: внесите ваши сегодняшние доходы и расходы.");
+            }
+
+            if (APP_STATE.settings.notifDebts) {
+                APP_STATE.debts.forEach(d => {
+                    if (!d.paid) {
+                        const daysLeft = Math.ceil((new Date(d.dueDate) - new Date()) / (1000 * 60 * 60 * 24));
+                        if (daysLeft <= 3 && daysLeft >= 0) {
+                            alerts.push(`Скоро срок оплаты по долгу "${d.title}" (${d.amount.toLocaleString()} ₸)!`);
+                        }
+                    }
+                });
+            }
+
+            if (alerts.length > 0) {
+                alertText.textContent = alerts.join(" | ");
+                banner.classList.remove('hidden');
+            }
+        }
+
+        function dismissNotificationBanner() {
+            document.getElementById('notificationAlertBanner').classList.add('hidden');
+        }
+
+        function closeModal(id) {
+            document.getElementById(id).classList.add('hidden');
+        }
+
+        function showToast(msg) {
             const toast = document.createElement('div');
-            toast.className = `p-4 rounded-xl text-white font-bold text-xs shadow-xl flex items-center gap-2 ${type==='error'?'bg-rose-600':'bg-slate-900'}`;
-            toast.innerHTML = `<i class="fa-solid ${type==='error'?'fa-circle-exclamation':'fa-circle-check'}"></i> <span>${msg}</span>`;
+            toast.className = "bg-slate-900 text-white px-4 py-3 rounded-2xl shadow-xl text-xs font-semibold flex items-center gap-2 border border-slate-700 pointer-events-auto transition-all transform duration-300 translate-y-2";
+            toast.innerHTML = `<i class="fa-solid fa-circle-check text-emerald-400 text-sm"></i> ${msg}`;
+            const container = document.getElementById('toastContainer');
             container.appendChild(toast);
-            setTimeout(() => toast.remove(), 2500);
+            setTimeout(() => toast.remove(), 3000);
         }
     </script>
 </body>
