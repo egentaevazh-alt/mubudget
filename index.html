@@ -7,7 +7,7 @@
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- Chart.js -->
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <!-- FontAwesome icons -->
     <!-- Supabase JS Client -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -844,13 +844,18 @@
     </div>
 
     <script>
-        // Данные вашего проекта Supabase (URL и public anon key из настроек API)
-// Настройки подключения к Supabase (проект cashcontrol)
-const SUPABASE_URL = 'https://jjhqkayzxjjiesmslzgx.supabase.co';
-const SUPABASE_KEY = 'sb_publishable_tu59lIA5n1BwCw-YZny2eA_67wwq38z'; // вставьте полный скопированный ключ
+        // Безопасная инициализация Supabase с защитой от сбоя
+const SUPABASE_URL = 'https://supabase.com/dashboard/project/jjhqkayzxjjiesmslzgx';
+const SUPABASE_KEY = 'sb_publishable_tu59lIA5n1BwCw-YZny2eA_67wwq38z'; // sb_publishable_tu59...
 
-const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-
+let supabase = null;
+try {
+    if (window.supabase && typeof window.supabase.createClient === 'function') {
+        supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+    }
+} catch (err) {
+    console.warn('Supabase не подключен, работаем в локальном режиме:', err);
+}
 // Пример загрузки счетов из облачной базы данных
 async function fetchAccountsFromSupabase() {
     const { data: { user } } = await supabase.auth.getUser();
