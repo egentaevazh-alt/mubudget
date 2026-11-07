@@ -390,6 +390,21 @@
                                 <button type="submit" class="px-4 py-2.5 bg-brand-600 text-white font-bold text-xs rounded-xl hover:bg-brand-700 transition w-full">Сохранить данные профиля</button>
                             </form>
                         </div>
+                        <!-- Supabase Cloud Account -->
+                        <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-5 rounded-3xl space-y-3 shadow-sm">
+                            <h3 class="font-bold text-base flex items-center gap-2"><i class="fa-solid fa-cloud text-brand-600"></i> Облачное хранилище Supabase</h3>
+                            <p class="text-xs text-slate-400">Войдите или зарегистрируйтесь, чтобы синхронизировать счета, операции, цели, долги и настройки между устройствами.</p>
+                            <p id="cloudAccountLabel" class="text-xs font-semibold text-slate-600 dark:text-slate-300">Проверка подключения...</p>
+                            <input type="email" id="cloudAuthEmail" autocomplete="email" placeholder="Ваш email" class="w-full bg-slate-100 dark:bg-slate-800 border-0 rounded-xl px-4 py-3 text-xs">
+                            <input type="password" id="cloudAuthPassword" autocomplete="current-password" placeholder="Пароль (минимум 6 символов)" class="w-full bg-slate-100 dark:bg-slate-800 border-0 rounded-xl px-4 py-3 text-xs">
+                            <div class="grid grid-cols-2 gap-2">
+                                <button id="cloudSignInBtn" type="button" onclick="cloudSignIn()" class="py-3 bg-brand-600 text-white font-bold text-xs rounded-xl">Войти</button>
+                                <button id="cloudSignUpBtn" type="button" onclick="cloudSignUp()" class="py-3 bg-slate-200 dark:bg-slate-700 text-xs font-bold rounded-xl">Регистрация</button>
+                                <button id="cloudSignOutBtn" type="button" onclick="cloudSignOut()" class="hidden col-span-2 py-3 bg-slate-200 dark:bg-slate-700 text-xs font-bold rounded-xl">Выйти из аккаунта</button>
+                            </div>
+                            <p id="cloudSyncStatus" class="text-xs mt-2 text-slate-400">Подключение...</p>
+                        </div>
+
                         <!-- Социальные сети -->
 <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-6 rounded-3xl space-y-4">
     <h3 class="font-bold text-lg flex items-center gap-2">
@@ -714,7 +729,7 @@
                 <button type="button" onclick="document.getElementById('creditForm').requestSubmit()" class="text-brand-600 text-sm font-bold">Готово</button>
             </div>
 
-            <form id creditForm onsubmit="handleCreditSubmit(event)" class="space-y-4 text-xs">
+            <form id="creditForm" onsubmit="handleCreditSubmit(event)" class="space-y-4 text-xs">
                 <input type="hidden" id="creditType" value="my_debts">
                 
                 <!-- Main Details Box -->
@@ -844,45 +859,20 @@
     </div>
 
     <script>
-// 1. ИНИЦИАЛИЗАЦИЯ SUPABASE (CASHCONTROL)
-// ==========================================
+// Supabase cloud sync is optional; localStorage remains the offline fallback.
 const SUPABASE_URL = 'https://jjhqkayzxjjiesmslzgx.supabase.co';
-const SUPABASE_KEY = 'sb_publishable_tu59lIA5n1BwCw-YZny2eA_67wwq38z'; // Вставьте весь ваш ключ из вкладки Publishable key
-
-let supabase = null;
+const SUPABASE_KEY = 'sb_publishable_tu59lIA5n1BwCw-YZny2eA_67wwq38z';
+let supabaseClient = null;
+let currentSupabaseUser = null;
+let cloudSyncBusy = false;
 try {
     if (window.supabase && typeof window.supabase.createClient === 'function') {
-        supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+        supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY, {
+            auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true }
+        });
     }
-} catch (e) {
-    console.warn('Supabase fallback:', e);
-}
+} catch (error) { console.error('Supabase initialization error:', error); }
 
-// ==========================================
-// 2. ДАЛЕЕ ИДЕТ ВАШ ОРИГИНАЛЬНЫЙ APP_STATE
-// ==========================================
-const APP_STATE = {
-    user: JSON.parse(localStorage.getItem('mubudget_user')) || { name: 'Пользователь', status: 'Активный' },
-    ...
-
-        
-// Пример загрузки счетов из облачной базы данных
-async function fetchAccountsFromSupabase() {
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return;
-
-    const { data, error } = await supabase
-        .from('accounts')
-        .select('*')
-        .eq('user_id', user.id);
-
-    if (error) {
-        console.error('Ошибка загрузки счетов:', error);
-    } else {
-        APP_STATE.accounts = data;
-        renderAccounts();
-    }
-}
         // Global Application State (Supports Cashcontrol brand)
         const APP_STATE = {
             user: JSON.parse(localStorage.getItem('cashcontrol_user')) || { name: 'Пользователь', email: 'user@example.com', password: '' },
@@ -915,23 +905,25 @@ async function fetchAccountsFromSupabase() {
             'Vacation': { label: 'Отпуск', icon: '🌴', bg: 'bg-cyan-500/20 text-cyan-700 dark:text-cyan-300 border-cyan-400' }
         };
 
-        window.onload = function() {
+        window.addEventListener('load', async function() {
             setTheme(APP_STATE.theme);
             initUserProfile();
             updateCurrencyUI();
             renderAllData();
-
-            document.getElementById('shiftAccountOption').addEventListener('change', function() {
+            const shiftOption = document.getElementById('shiftAccountOption');
+            if (shiftOption) shiftOption.addEventListener('change', function() {
                 const box = document.getElementById('shiftAccountSelectBox');
-                if (this.value === 'auto') {
-                    box.classList.remove('hidden');
-                } else {
-                    box.classList.add('hidden');
-                }
+                if (box) box.classList.toggle('hidden', this.value !== 'auto');
             });
-        };
+            await initializeCloudSync();
+        });
 
         function saveState() {
+            saveLocalStateOnly();
+            renderAllData();
+            if (currentSupabaseUser) syncStateToCloud();
+        }
+        function saveLocalStateOnly() {
             localStorage.setItem('cashcontrol_user', JSON.stringify(APP_STATE.user));
             localStorage.setItem('cashcontrol_theme', APP_STATE.theme);
             localStorage.setItem('cashcontrol_currency', APP_STATE.currency);
@@ -941,8 +933,122 @@ async function fetchAccountsFromSupabase() {
             localStorage.setItem('cashcontrol_goals', JSON.stringify(APP_STATE.goals));
             localStorage.setItem('cashcontrol_debts', JSON.stringify(APP_STATE.debts));
             localStorage.setItem('cashcontrol_shifts', JSON.stringify(APP_STATE.shifts));
-            
-            renderAllData();
+        }
+        function setCloudStatus(message, isError = false) {
+            const el = document.getElementById('cloudSyncStatus');
+            if (!el) return;
+            el.textContent = message;
+            el.className = 'text-xs mt-2 ' + (isError ? 'text-rose-500' : 'text-emerald-600 dark:text-emerald-400');
+        }
+        function cloudSnapshot() {
+            const copy = JSON.parse(JSON.stringify(APP_STATE));
+            if (copy.user) delete copy.user.password;
+            return copy;
+        }
+        async function syncStateToCloud() {
+            if (!supabaseClient || !currentSupabaseUser || cloudSyncBusy) return;
+            cloudSyncBusy = true;
+            try {
+                const { error } = await supabaseClient.from('user_data').upsert({
+                    user_id: currentSupabaseUser.id,
+                    data: cloudSnapshot(),
+                    updated_at: new Date().toISOString()
+                }, { onConflict: 'user_id' });
+                if (error) throw error;
+                setCloudStatus('Синхронизировано с Supabase');
+            } catch (error) {
+                console.error('Cloud sync error:', error);
+                setCloudStatus('Ошибка синхронизации: ' + error.message, true);
+            } finally { cloudSyncBusy = false; }
+        }
+        async function loadStateFromCloud() {
+            if (!supabaseClient || !currentSupabaseUser) return;
+            try {
+                const { data, error } = await supabaseClient.from('user_data')
+                    .select('data').eq('user_id', currentSupabaseUser.id).maybeSingle();
+                if (error) throw error;
+                if (data && data.data) {
+                    const cloud = data.data;
+                    ['theme','currency','budgetLimit','accounts','transactions','goals','debts','shifts'].forEach(k => {
+                        if (Object.prototype.hasOwnProperty.call(cloud, k)) APP_STATE[k] = cloud[k];
+                    });
+                    if (cloud.user) APP_STATE.user = { ...APP_STATE.user, ...cloud.user };
+                    delete APP_STATE.user.password;
+                    saveLocalStateOnly();
+                    setTheme(APP_STATE.theme);
+                    initUserProfile();
+                    renderAllData();
+                    setCloudStatus('Данные загружены из Supabase');
+                } else {
+                    await syncStateToCloud();
+                    setCloudStatus('Облачная запись создана для вашего аккаунта');
+                }
+            } catch (error) {
+                console.error('Cloud load error:', error);
+                setCloudStatus('Не удалось загрузить данные: ' + error.message, true);
+            }
+        }
+        async function initializeCloudSync() {
+            if (!supabaseClient) {
+                setCloudStatus('Локальный режим: проверьте настройки Supabase');
+                updateCloudAuthUI();
+                return;
+            }
+            try {
+                const { data, error } = await supabaseClient.auth.getSession();
+                if (error) throw error;
+                currentSupabaseUser = data.session?.user || null;
+                updateCloudAuthUI();
+                if (currentSupabaseUser) await loadStateFromCloud();
+                else setCloudStatus('Войдите или зарегистрируйтесь для облачной синхронизации');
+                supabaseClient.auth.onAuthStateChange((event, session) => {
+                    currentSupabaseUser = session?.user || null;
+                    updateCloudAuthUI();
+                    if (event === 'SIGNED_IN') setTimeout(loadStateFromCloud, 0);
+                    if (event === 'SIGNED_OUT') setCloudStatus('Вы вышли. Локальные данные сохранены');
+                });
+            } catch (error) {
+                console.error('Supabase error:', error);
+                setCloudStatus('Supabase недоступен: ' + error.message, true);
+            }
+        }
+        function updateCloudAuthUI() {
+            const email = document.getElementById('cloudAuthEmail');
+            const login = document.getElementById('cloudSignInBtn');
+            const signup = document.getElementById('cloudSignUpBtn');
+            const logout = document.getElementById('cloudSignOutBtn');
+            const label = document.getElementById('cloudAccountLabel');
+            if (currentSupabaseUser) {
+                if (email) email.value = currentSupabaseUser.email || '';
+                login?.classList.add('hidden'); signup?.classList.add('hidden'); logout?.classList.remove('hidden');
+                if (label) label.textContent = 'Вход выполнен: ' + (currentSupabaseUser.email || '');
+            } else {
+                login?.classList.remove('hidden'); signup?.classList.remove('hidden'); logout?.classList.add('hidden');
+                if (label) label.textContent = 'Облачный аккаунт не подключен';
+            }
+        }
+        async function cloudSignIn() {
+            const email = document.getElementById('cloudAuthEmail').value.trim();
+            const password = document.getElementById('cloudAuthPassword').value;
+            if (!email || !password) return setCloudStatus('Введите email и пароль', true);
+            const { error } = await supabaseClient.auth.signInWithPassword({ email, password });
+            if (error) setCloudStatus(error.message, true);
+        }
+        async function cloudSignUp() {
+            const email = document.getElementById('cloudAuthEmail').value.trim();
+            const password = document.getElementById('cloudAuthPassword').value;
+            if (!email || !password) return setCloudStatus('Введите email и пароль', true);
+            if (password.length < 6) return setCloudStatus('Пароль должен содержать минимум 6 символов', true);
+            const { data, error } = await supabaseClient.auth.signUp({
+                email, password,
+                options: { emailRedirectTo: window.location.origin + window.location.pathname }
+            });
+            if (error) setCloudStatus(error.message, true);
+            else if (!data.session) setCloudStatus('Проверьте почту и подтвердите регистрацию, затем войдите');
+        }
+        async function cloudSignOut() {
+            const { error } = await supabaseClient.auth.signOut();
+            if (error) setCloudStatus(error.message, true);
         }
 
         function changeCurrency(curr) {
@@ -1722,7 +1828,6 @@ async function fetchAccountsFromSupabase() {
             e.preventDefault();
             const name = document.getElementById('settingUserName').value.trim();
             const email = document.getElementById('settingUserEmail').value.trim();
-            const password = document.getElementById('settingUserPassword').value;
 
             if (!email.includes('@') || !email.includes('.')) {
                 alert('Пожалуйста, введите корректный адрес электронной почты!');
@@ -1731,7 +1836,7 @@ async function fetchAccountsFromSupabase() {
 
             APP_STATE.user.name = name;
             APP_STATE.user.email = email;
-            if (password) APP_STATE.user.password = password;
+            document.getElementById('settingUserPassword').value = '';
 
             saveState();
             initUserProfile();
