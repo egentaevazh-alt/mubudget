@@ -49,6 +49,11 @@
         body {
             -webkit-tap-highlight-color: transparent;
         }
+        :root {--cc-primary:#475569;--cc-hover:#334155;}
+        .bg-brand-600 {background-color:var(--cc-primary)!important;}
+        .hover\:bg-brand-700:hover {background-color:var(--cc-hover)!important;}
+        .text-brand-600 {color:var(--cc-primary)!important;}
+        .border-brand-600 {border-color:var(--cc-primary)!important;}
     </style>
 </head>
 <body class="bg-slate-50 text-slate-900 dark:bg-slate-950 dark:text-slate-100 min-h-screen transition-colors duration-200 font-sans antialiased pb-24 md:pb-0">
@@ -210,6 +215,7 @@
                         <button onclick="openTransactionModal('income')" class="py-3.5 px-4 bg-emerald-600 hover:bg-emerald-700 active:scale-95 text-white font-bold rounded-2xl shadow-md transition flex items-center justify-center gap-2 text-sm md:text-base">
                             <i class="fa-solid fa-circle-plus text-lg"></i> Добавить Доход
                         </button>
+<button onclick="openTransferModal()" class="px-4 py-3 bg-slate-200 dark:bg-slate-800 text-xs font-bold rounded-2xl"><i class="fa-solid fa-right-left"></i> Перевод между счетами</button>
                         <button onclick="openTransactionModal('expense')" class="py-3.5 px-4 bg-brand-600 hover:bg-brand-700 active:scale-95 text-white font-bold rounded-2xl shadow-md shadow-brand-600/20 transition flex items-center justify-center gap-2 text-sm md:text-base">
                             <i class="fa-solid fa-circle-minus text-lg"></i> Добавить Расход
                         </button>
@@ -351,6 +357,13 @@
                     </div>
 
                     <div class="space-y-4 max-w-2xl">
+                        <!-- Language Selection -->
+                        <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-5 rounded-3xl shadow-sm flex items-center justify-between gap-4">
+                            <div><h3 class="font-bold text-sm">Язык приложения</h3><p class="text-xs text-slate-400 mt-0.5">Выберите язык интерфейса</p></div>
+                            <select id="settingLanguageSelect" onchange="setLanguage(this.value)" class="bg-slate-100 dark:bg-slate-800 font-bold text-xs px-4 py-2.5 rounded-xl border-0 focus:ring-2 focus:ring-brand-500">
+                                <option value="kk">Қазақша</option><option value="ru">Русский</option><option value="en">English</option><option value="de">Deutsch</option>
+                            </select>
+                        </div>
                         <!-- Currency Selection Card -->
                         <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-5 rounded-3xl space-y-3 shadow-sm">
                             <div class="flex items-center justify-between">
@@ -369,40 +382,58 @@
                             </div>
                         </div>
 
-                        <!-- Account & Profile Card -->
-                        <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-5 rounded-3xl space-y-4 shadow-sm">
-                            <h3 class="font-bold text-base flex items-center gap-2">
-                                <i class="fa-solid fa-user-gear text-brand-600"></i> Профиль и Данные
-                            </h3>
-                            <form onsubmit="saveUserProfile(event)" class="space-y-3">
-                                <div>
-                                    <label class="block text-xs font-semibold mb-1 text-slate-400">Имя пользователя</label>
-                                    <input type="text" id="settingUserName" required placeholder="Имя пользователя" class="bg-slate-100 dark:bg-slate-800 border-0 rounded-xl px-4 py-2.5 text-xs w-full focus:ring-2 focus:ring-brand-500" />
-                                </div>
-                                <div>
-                                    <label class="block text-xs font-semibold mb-1 text-slate-400">Существующий Email</label>
-                                    <input type="email" id="settingUserEmail" required placeholder="name@domain.com" class="bg-slate-100 dark:bg-slate-800 border-0 rounded-xl px-4 py-2.5 text-xs w-full focus:ring-2 focus:ring-brand-500" />
-                                </div>
-                                <div>
-                                    <label class="block text-xs font-semibold mb-1 text-slate-400">Пароль от почты / аккаунта</label>
-                                    <input type="password" id="settingUserPassword" placeholder="••••••••" class="bg-slate-100 dark:bg-slate-800 border-0 rounded-xl px-4 py-2.5 text-xs w-full focus:ring-2 focus:ring-brand-500" />
-                                </div>
-                                <button type="submit" class="px-4 py-2.5 bg-brand-600 text-white font-bold text-xs rounded-xl hover:bg-brand-700 transition w-full">Сохранить данные профиля</button>
-                            </form>
+
+                        <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-5 rounded-3xl space-y-3">
+                            <h3 class="font-bold">🎨 Палитра блоков</h3>
+                            <select id="paletteSelect" onchange="setPalette(this.value)" class="w-full p-3 rounded-xl bg-slate-100 dark:bg-slate-800">
+                                <option value="graphite">Графит</option><option value="blue">Синий</option><option value="red">Красный</option><option value="emerald">Изумруд</option><option value="purple">Фиолетовый</option>
+                            </select>
                         </div>
-                        <!-- Supabase Cloud Account -->
-                        <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-5 rounded-3xl space-y-3 shadow-sm">
-                            <h3 class="font-bold text-base flex items-center gap-2"><i class="fa-solid fa-cloud text-brand-600"></i> Облачное хранилище Supabase</h3>
-                            <p class="text-xs text-slate-400">Войдите или зарегистрируйтесь, чтобы синхронизировать счета, операции, цели, долги и настройки между устройствами.</p>
-                            <p id="cloudAccountLabel" class="text-xs font-semibold text-slate-600 dark:text-slate-300">Проверка подключения...</p>
-                            <input type="email" id="cloudAuthEmail" autocomplete="email" placeholder="Ваш email" class="w-full bg-slate-100 dark:bg-slate-800 border-0 rounded-xl px-4 py-3 text-xs">
-                            <input type="password" id="cloudAuthPassword" autocomplete="current-password" placeholder="Пароль (минимум 6 символов)" class="w-full bg-slate-100 dark:bg-slate-800 border-0 rounded-xl px-4 py-3 text-xs">
-                            <div class="grid grid-cols-2 gap-2">
-                                <button id="cloudSignInBtn" type="button" onclick="cloudSignIn()" class="py-3 bg-brand-600 text-white font-bold text-xs rounded-xl">Войти</button>
-                                <button id="cloudSignUpBtn" type="button" onclick="cloudSignUp()" class="py-3 bg-slate-200 dark:bg-slate-700 text-xs font-bold rounded-xl">Регистрация</button>
-                                <button id="cloudSignOutBtn" type="button" onclick="cloudSignOut()" class="hidden col-span-2 py-3 bg-slate-200 dark:bg-slate-700 text-xs font-bold rounded-xl">Выйти из аккаунта</button>
+                        <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-5 rounded-3xl space-y-3">
+                            <h3 class="font-bold">📅 Обязательные траты</h3>
+                            <p class="text-xs text-slate-400">Регулярные платежи: аренда, подписки, коммунальные услуги и другое</p>
+                            <button onclick="openRecurringModal()" class="w-full p-3 bg-brand-600 text-white rounded-xl font-bold text-sm">+ Новый платёж</button>
+                            <div id="recurringList" class="space-y-2"></div>
+                        </div>
+                        <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-5 rounded-3xl space-y-3">
+                            <h3 class="font-bold">🔔 Напоминания</h3>
+                            <label class="flex items-center gap-3 text-sm"><input id="remindersEnabled" type="checkbox" onchange="toggleReminders(this.checked)"> Включить напоминания</label>
+                            <p class="text-xs text-slate-400">В этой веб-версии уведомления проверяются, когда сайт открыт. Для уведомлений при закрытом сайте потребуется отдельная серверная настройка push.</p>
+                            <div id="remindersList" class="space-y-2"></div>
+                        </div>
+                        <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-5 rounded-3xl space-y-3">
+                            <h3 class="font-bold">✨ Asyl AI</h3>
+                            <p class="text-xs text-slate-400">Будущий финансовый помощник. Для настоящего ИИ потребуется защищённый сервер и API модели.</p>
+                            <button onclick="showAsylPreview()" class="w-full p-3 rounded-xl bg-slate-100 dark:bg-slate-800 text-sm font-bold">Посмотреть анализ расходов</button>
+                            <div id="asylResult" class="text-sm"></div>
+                            <div class="border-t border-slate-200 dark:border-slate-800 pt-3"><b>Подписка Asyl AI</b><p class="text-xs text-slate-400 mt-1">Оплата пока не подключена. Списаний не будет; оформление появится после подключения платёжного провайдера и серверной проверки подписки.</p></div>
+                        </div>
+
+                        <!-- One account: profile + Supabase authentication -->
+                        <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-5 rounded-3xl space-y-4 shadow-sm">
+                            <h3 class="font-bold text-base flex items-center gap-2"><i class="fa-solid fa-user-gear text-brand-600"></i> Аккаунт и профиль</h3>
+                            <div>
+                                <label class="block text-xs font-semibold mb-1 text-slate-400">Имя пользователя</label>
+                                <input type="text" id="settingUserName" placeholder="Ваше имя" class="bg-slate-100 dark:bg-slate-800 border-0 rounded-xl px-4 py-2.5 text-xs w-full focus:ring-2 focus:ring-brand-500" />
+                                <button type="button" onclick="saveUserProfile()" class="mt-2 px-4 py-2.5 bg-slate-200 dark:bg-slate-700 font-bold text-xs rounded-xl w-full">Сохранить имя профиля</button>
                             </div>
-                            <p id="cloudSyncStatus" class="text-xs mt-2 text-slate-400">Подключение...</p>
+                            <div class="border-t border-slate-100 dark:border-slate-800 pt-4 space-y-3">
+                                <p class="text-xs text-slate-400">Один аккаунт для входа и синхронизации счетов, операций, целей, долгов и настроек между устройствами.</p>
+                                <p id="cloudAccountLabel" class="text-xs font-semibold text-slate-600 dark:text-slate-300">Проверка подключения...</p>
+                                <input type="email" id="cloudAuthEmail" autocomplete="email" placeholder="Email" class="w-full bg-slate-100 dark:bg-slate-800 border-0 rounded-xl px-4 py-3 text-xs">
+                                <input type="password" id="cloudAuthPassword" autocomplete="current-password" placeholder="Пароль (минимум 6 символов)" class="w-full bg-slate-100 dark:bg-slate-800 border-0 rounded-xl px-4 py-3 text-xs">
+                                <label id="cloudConsentWrap" class="flex items-start gap-2 text-[11px] text-slate-500 dark:text-slate-400 leading-relaxed">
+                                    <input id="cloudDataConsent" type="checkbox" class="mt-0.5 accent-rose-600" required>
+                                    <span>Я согласен(на) с <button type="button" onclick="openPrivacyModal()" class="text-brand-600 underline font-semibold">Политикой конфиденциальности и Пользовательским соглашением</button> и даю согласие на хранение и обработку моих финансовых данных для работы Cashcontrol.</span>
+                                </label>
+                                <button id="cloudConsentAcceptBtn" type="button" onclick="acceptCloudConsent()" class="hidden w-full py-3 bg-emerald-600 text-white font-bold text-xs rounded-xl">Подтвердить согласие и включить синхронизацию</button>
+                                <div class="grid grid-cols-2 gap-2">
+                                    <button id="cloudSignInBtn" type="button" onclick="cloudSignIn()" class="py-3 bg-brand-600 text-white font-bold text-xs rounded-xl">Войти</button>
+                                    <button id="cloudSignUpBtn" type="button" onclick="cloudSignUp()" class="py-3 bg-slate-200 dark:bg-slate-700 text-xs font-bold rounded-xl">Создать аккаунт</button>
+                                    <button id="cloudSignOutBtn" type="button" onclick="cloudSignOut()" class="hidden col-span-2 py-3 bg-slate-200 dark:bg-slate-700 text-xs font-bold rounded-xl">Выйти из аккаунта</button>
+                                </div>
+                                <p id="cloudSyncStatus" class="text-xs mt-2 text-slate-400">Подключение...</p>
+                            </div>
                         </div>
 
                         <!-- Социальные сети -->
@@ -431,7 +462,7 @@
             </div>
             <div>
                 <p class="text-sm font-bold">LinkedIn</p>
-                <p class="text-xs text-slate-400">Cashcontrol Inc.</p>
+                <p class="text-xs text-slate-400">Cashcontrol</p>
             </div>
         </a>
     </div>
@@ -467,24 +498,14 @@
                             </div>
                         </div>
                     </div>
+                    <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-6 rounded-3xl space-y-4 max-w-2xl">
+                        <h3 class="font-bold text-lg flex items-center gap-2"><i class="fa-solid fa-shield-halved text-brand-600"></i> Правовая информация</h3>
+                        <p class="text-xs text-slate-500 dark:text-slate-400">Условия использования Cashcontrol и обработка данных</p>
+                        <button onclick="openPrivacyModal()" class="w-full flex items-center justify-between p-3.5 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 rounded-2xl transition text-left">
+                            <span class="text-sm font-semibold">Политика конфиденциальности и Пользовательское соглашение</span><i class="fa-solid fa-chevron-right text-xs text-slate-400"></i>
+                        </button>
+                    </div>
                 </section>
-<!-- Документация и правовая информация -->
-<div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-6 rounded-3xl space-y-4">
-    <h3 class="font-bold text-lg flex items-center gap-2">
-        <i class="fa-solid fa-shield-halved text-brand-600"></i> Правовая информация
-    </h3>
-    <p class="text-xs text-slate-500 dark:text-slate-400">Ознакомьтесь с условиями использования сервиса Cashcontrol</p>
-
-    <div class="space-y-2">
-        <button onclick="openPrivacyModal()" class="w-full flex items-center justify-between p-3.5 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 rounded-2xl transition text-left">
-            <div class="flex items-center gap-3">
-                <i class="fa-solid fa-file-contract text-slate-500"></i>
-                <span class="text-sm font-semibold">Политика конфиденциальности и Соглашение</span>
-            </div>
-            <i class="fa-solid fa-chevron-right text-xs text-slate-400"></i>
-        </button>
-    </div>
-</div>
                 <!-- SUB-MODULE: WISHLIST -->
                 <section id="subtab-wishlist" class="tab-content hidden space-y-6">
                     <div class="flex items-center justify-between">
@@ -650,12 +671,14 @@
                 <!-- Expense Category -->
                 <div id="txCategoryExpenseBox">
                     <label class="block text-xs font-semibold mb-1 text-slate-400">Куда тратятся деньги (Категория)</label>
+                    <select id="txCategoryExpensePreset" onchange="chooseCategory('Expense',this.value)" class="w-full mb-2 bg-slate-100 dark:bg-slate-800 rounded-xl p-3 text-sm"></select>
                     <input type="text" id="txCategoryExpenseInput" placeholder="Например: Продукты, Кафе, Транспорт" class="w-full bg-slate-100 dark:bg-slate-800 border-0 rounded-xl p-3 text-sm focus:ring-2 focus:ring-brand-500" />
                 </div>
 
                 <!-- Income Category -->
                 <div id="txCategoryIncomeBox" class="hidden">
                     <label class="block text-xs font-semibold mb-1 text-slate-400">Откуда берутся деньги (Источник)</label>
+                    <select id="txCategoryIncomePreset" onchange="chooseCategory('Income',this.value)" class="w-full mb-2 bg-slate-100 dark:bg-slate-800 rounded-xl p-3 text-sm"></select>
                     <input type="text" id="txCategoryIncomeInput" placeholder="Например: Зарплата, Подработка, Подарок" class="w-full bg-slate-100 dark:bg-slate-800 border-0 rounded-xl p-3 text-sm focus:ring-2 focus:ring-brand-500" />
                 </div>
 
@@ -735,7 +758,7 @@
                 <!-- Main Details Box -->
                 <div class="bg-slate-50 dark:bg-slate-800/60 p-4 rounded-2xl border border-slate-200 dark:border-slate-700 space-y-3">
                     <div>
-                        <input type="text" id="creditBank" required placeholder="Банк или кредитор (напр. Kaspi)" class="w-full bg-transparent border-b border-slate-200 dark:border-slate-700 pb-2 text-sm focus:outline-none focus:border-brand-500" />
+                        <input type="text" id="creditBank" required placeholder="Банк, кредитор или имя человека" class="w-full bg-transparent border-b border-slate-200 dark:border-slate-700 pb-2 text-sm focus:outline-none focus:border-brand-500" />
                     </div>
                     <div class="flex items-center justify-between">
                         <span class="text-slate-500 font-medium">Сумма кредита</span>
@@ -757,7 +780,7 @@
                 <p class="text-[10px] text-slate-400 px-1 leading-tight">Сумма зачислится как поступление и увеличит остаток, но в «Доходы» не попадет.</p>
 
                 <!-- Conditions Box -->
-                <div class="space-y-1">
+                <div class="space-y-1 loan-only">
                     <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider px-1">Условия</span>
                     <div class="bg-slate-50 dark:bg-slate-800/60 p-4 rounded-2xl border border-slate-200 dark:border-slate-700 space-y-3">
                         <div class="flex items-center justify-between">
@@ -773,7 +796,7 @@
                 <p class="text-[10px] text-slate-400 px-1 leading-tight">Платеж рассчитается по аннуитету из суммы, срока и ставки.</p>
 
                 <!-- When to pay Box -->
-                <div class="space-y-1">
+                <div class="space-y-1 loan-only">
                     <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider px-1">Когда платить</span>
                     <div class="bg-slate-50 dark:bg-slate-800/60 p-3.5 rounded-2xl border border-slate-200 dark:border-slate-700 flex items-center justify-between">
                         <span class="text-slate-500 font-medium">Каждое число</span>
@@ -786,7 +809,7 @@
                 </div>
 
                 <!-- Notification Box -->
-                <div class="space-y-1">
+                <div class="space-y-1 loan-only">
                     <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider px-1">Напоминание</span>
                     <div class="bg-slate-50 dark:bg-slate-800/60 p-4 rounded-2xl border border-slate-200 dark:border-slate-700 space-y-3">
                         <div class="flex items-center justify-between">
@@ -858,6 +881,35 @@
         </div>
     </div>
 
+
+    <div id="modalTransfer" class="fixed inset-0 z-50 hidden bg-slate-950/70 flex items-center justify-center p-4">
+      <div class="bg-white dark:bg-slate-900 rounded-3xl p-6 w-full max-w-md space-y-4">
+        <div class="flex justify-between"><h3 class="font-bold text-lg">Перевод между счетами</h3><button onclick="closeModal('modalTransfer')">✕</button></div>
+        <form onsubmit="submitTransfer(event)" class="space-y-3">
+          <label class="block text-sm">Откуда<select id="transferFrom" required class="w-full p-3 rounded-xl bg-slate-100 dark:bg-slate-800"></select></label>
+          <label class="block text-sm">Куда<select id="transferTo" required class="w-full p-3 rounded-xl bg-slate-100 dark:bg-slate-800"></select></label>
+          <label class="block text-sm">Сумма<input id="transferAmount" type="number" min="0.01" step="0.01" required class="w-full p-3 rounded-xl bg-slate-100 dark:bg-slate-800"></label>
+          <button class="w-full p-3 rounded-xl bg-brand-600 text-white font-bold">Перевести</button>
+        </form>
+      </div>
+    </div>
+    <div id="modalRecurring" class="fixed inset-0 z-50 hidden bg-slate-950/70 flex items-center justify-center p-4 overflow-y-auto">
+      <div class="bg-white dark:bg-slate-900 rounded-3xl p-6 w-full max-w-md space-y-4">
+        <div class="flex justify-between"><h3 class="font-bold text-lg">Новый обязательный платёж</h3><button onclick="closeModal('modalRecurring')">✕</button></div>
+        <form onsubmit="submitRecurring(event)" class="space-y-3">
+          <input id="recName" required placeholder="Например, квартплата" class="w-full p-3 rounded-xl bg-slate-100 dark:bg-slate-800">
+          <label class="block text-sm">Сумма в месяц<input id="recAmount" type="number" min="0.01" step="0.01" required class="w-full p-3 rounded-xl bg-slate-100 dark:bg-slate-800"></label>
+          <label class="block text-sm">Категория<select id="recCategory" class="w-full p-3 rounded-xl bg-slate-100 dark:bg-slate-800"><option>Дом и вещи</option><option>Подписки</option><option>Семья</option><option>Другое</option></select></label>
+          <label class="block text-sm">Каждое число месяца<input id="recDay" type="number" min="1" max="31" value="1" required class="w-full p-3 rounded-xl bg-slate-100 dark:bg-slate-800"></label>
+          <label class="block text-sm">Время<input id="recTime" type="time" value="10:00" required class="w-full p-3 rounded-xl bg-slate-100 dark:bg-slate-800"></label>
+          <label class="block text-sm">Напомнить<select id="recBefore" class="w-full p-3 rounded-xl bg-slate-100 dark:bg-slate-800"><option value="0">В день платежа</option><option value="1">За 1 день</option><option value="3" selected>За 3 дня</option><option value="5">За 5 дней</option></select></label>
+          <label class="flex gap-2 text-sm"><input type="checkbox" id="recNotify" checked> Напоминать</label>
+          <label class="flex gap-2 text-sm"><input type="checkbox" id="recRecord" checked> Записывать в расходы при оплате</label>
+          <button class="w-full p-3 rounded-xl bg-brand-600 text-white font-bold">Сохранить платёж</button>
+        </form>
+      </div>
+    </div>
+
     <script>
 // Supabase cloud sync is optional; localStorage remains the offline fallback.
 const SUPABASE_URL = 'https://jjhqkayzxjjiesmslzgx.supabase.co';
@@ -873,17 +925,21 @@ try {
     }
 } catch (error) { console.error('Supabase initialization error:', error); }
 
-        // Global Application State (Supports Cashcontrol brand)
+        // Global Application State (legacy storage keys are retained for existing user data)
         const APP_STATE = {
             user: JSON.parse(localStorage.getItem('cashcontrol_user')) || { name: 'Пользователь', email: 'user@example.com', password: '' },
             theme: localStorage.getItem('cashcontrol_theme') || 'dark',
             currency: localStorage.getItem('cashcontrol_currency') || 'KZT',
+            language: localStorage.getItem('cashcontrol_language') || 'ru',
             budgetLimit: JSON.parse(localStorage.getItem('cashcontrol_limit')) || { period: 'month', amount: 0 },
             accounts: JSON.parse(localStorage.getItem('cashcontrol_accounts')) || [],
             transactions: JSON.parse(localStorage.getItem('cashcontrol_transactions')) || [],
             goals: JSON.parse(localStorage.getItem('cashcontrol_goals')) || [],
             debts: JSON.parse(localStorage.getItem('cashcontrol_debts')) || [],
             shifts: JSON.parse(localStorage.getItem('cashcontrol_shifts')) || [],
+            recurring: JSON.parse(localStorage.getItem('cashcontrol_recurring') || '[]'),
+            palette: localStorage.getItem('cashcontrol_palette') || 'graphite',
+            remindersEnabled: localStorage.getItem('cashcontrol_reminders') === 'true',
             activeDebtTab: 'my_debts'
         };
 
@@ -907,9 +963,13 @@ try {
 
         window.addEventListener('load', async function() {
             setTheme(APP_STATE.theme);
+            applyPalette();
+            document.documentElement.lang = APP_STATE.language || 'ru';
             initUserProfile();
             updateCurrencyUI();
             renderAllData();
+            document.getElementById('settingLanguageSelect').value = APP_STATE.language || 'ru';
+            applyTranslations();
             const shiftOption = document.getElementById('shiftAccountOption');
             if (shiftOption) shiftOption.addEventListener('change', function() {
                 const box = document.getElementById('shiftAccountSelectBox');
@@ -927,12 +987,16 @@ try {
             localStorage.setItem('cashcontrol_user', JSON.stringify(APP_STATE.user));
             localStorage.setItem('cashcontrol_theme', APP_STATE.theme);
             localStorage.setItem('cashcontrol_currency', APP_STATE.currency);
+            localStorage.setItem('cashcontrol_language', APP_STATE.language || 'ru');
             localStorage.setItem('cashcontrol_limit', JSON.stringify(APP_STATE.budgetLimit));
             localStorage.setItem('cashcontrol_accounts', JSON.stringify(APP_STATE.accounts));
             localStorage.setItem('cashcontrol_transactions', JSON.stringify(APP_STATE.transactions));
             localStorage.setItem('cashcontrol_goals', JSON.stringify(APP_STATE.goals));
             localStorage.setItem('cashcontrol_debts', JSON.stringify(APP_STATE.debts));
             localStorage.setItem('cashcontrol_shifts', JSON.stringify(APP_STATE.shifts));
+            localStorage.setItem('cashcontrol_recurring', JSON.stringify(APP_STATE.recurring));
+            localStorage.setItem('cashcontrol_palette', APP_STATE.palette);
+            localStorage.setItem('cashcontrol_reminders', String(APP_STATE.remindersEnabled));
         }
         function setCloudStatus(message, isError = false) {
             const el = document.getElementById('cloudSyncStatus');
@@ -969,10 +1033,12 @@ try {
                 if (error) throw error;
                 if (data && data.data) {
                     const cloud = data.data;
-                    ['theme','currency','budgetLimit','accounts','transactions','goals','debts','shifts'].forEach(k => {
+                    ['theme','currency','language','budgetLimit','accounts','transactions','goals','debts','shifts','recurring','palette','remindersEnabled'].forEach(k => {
                         if (Object.prototype.hasOwnProperty.call(cloud, k)) APP_STATE[k] = cloud[k];
                     });
                     if (cloud.user) APP_STATE.user = { ...APP_STATE.user, ...cloud.user };
+                    if (currentSupabaseUser.user_metadata?.full_name) APP_STATE.user.name = currentSupabaseUser.user_metadata.full_name;
+                    APP_STATE.user.email = currentSupabaseUser.email || APP_STATE.user.email;
                     delete APP_STATE.user.password;
                     saveLocalStateOnly();
                     setTheme(APP_STATE.theme);
@@ -999,12 +1065,19 @@ try {
                 if (error) throw error;
                 currentSupabaseUser = data.session?.user || null;
                 updateCloudAuthUI();
-                if (currentSupabaseUser) await loadStateFromCloud();
-                else setCloudStatus('Войдите или зарегистрируйтесь для облачной синхронизации');
+                if (currentSupabaseUser) {
+                    if (currentSupabaseUser.user_metadata?.full_name) APP_STATE.user.name = currentSupabaseUser.user_metadata.full_name;
+                    APP_STATE.user.email = currentSupabaseUser.email || APP_STATE.user.email;
+                    initUserProfile();
+                    if (currentSupabaseUser.user_metadata?.privacy_consent === true) await loadStateFromCloud();
+                    else {
+                        setCloudStatus('Подтвердите согласие на обработку данных, чтобы включить облачную синхронизацию');
+                        document.getElementById('cloudConsentAcceptBtn')?.classList.remove('hidden');
+                    }
+                } else setCloudStatus('Войдите или создайте аккаунт для облачной синхронизации');
                 supabaseClient.auth.onAuthStateChange((event, session) => {
                     currentSupabaseUser = session?.user || null;
                     updateCloudAuthUI();
-                    if (event === 'SIGNED_IN') setTimeout(loadStateFromCloud, 0);
                     if (event === 'SIGNED_OUT') setCloudStatus('Вы вышли. Локальные данные сохранены');
                 });
             } catch (error) {
@@ -1018,37 +1091,132 @@ try {
             const signup = document.getElementById('cloudSignUpBtn');
             const logout = document.getElementById('cloudSignOutBtn');
             const label = document.getElementById('cloudAccountLabel');
+            const consent = document.getElementById('cloudConsentWrap');
             if (currentSupabaseUser) {
                 if (email) email.value = currentSupabaseUser.email || '';
                 login?.classList.add('hidden'); signup?.classList.add('hidden'); logout?.classList.remove('hidden');
                 if (label) label.textContent = 'Вход выполнен: ' + (currentSupabaseUser.email || '');
+                if (consent) consent.classList.toggle('hidden', currentSupabaseUser.user_metadata?.privacy_consent === true);
             } else {
                 login?.classList.remove('hidden'); signup?.classList.remove('hidden'); logout?.classList.add('hidden');
-                if (label) label.textContent = 'Облачный аккаунт не подключен';
+                if (label) label.textContent = 'Аккаунт не подключен';
+                if (consent) consent.classList.remove('hidden');
             }
+        }
+        function hasDataConsent() {
+            return document.getElementById('cloudDataConsent')?.checked === true;
         }
         async function cloudSignIn() {
             const email = document.getElementById('cloudAuthEmail').value.trim();
             const password = document.getElementById('cloudAuthPassword').value;
             if (!email || !password) return setCloudStatus('Введите email и пароль', true);
-            const { error } = await supabaseClient.auth.signInWithPassword({ email, password });
-            if (error) setCloudStatus(error.message, true);
+            if (!hasDataConsent()) return setCloudStatus('Для входа и облачной синхронизации подтвердите согласие с условиями', true);
+            const { data, error } = await supabaseClient.auth.signInWithPassword({ email, password });
+            if (error) return setCloudStatus(error.message, true);
+            const { error: consentError } = await supabaseClient.auth.updateUser({ data: {
+                privacy_consent: true, privacy_consent_at: new Date().toISOString(), privacy_policy_version: '1.0'
+            }});
+            if (consentError) return setCloudStatus('Вход выполнен, но согласие не удалось сохранить: ' + consentError.message, true);
+            currentSupabaseUser = data.user;
+            const { data: refreshed } = await supabaseClient.auth.getUser();
+            currentSupabaseUser = refreshed?.user || currentSupabaseUser;
+            updateCloudAuthUI();
+            await loadStateFromCloud();
         }
         async function cloudSignUp() {
             const email = document.getElementById('cloudAuthEmail').value.trim();
             const password = document.getElementById('cloudAuthPassword').value;
+            const name = document.getElementById('settingUserName').value.trim();
+            if (!name) return setCloudStatus('Введите имя пользователя', true);
             if (!email || !password) return setCloudStatus('Введите email и пароль', true);
             if (password.length < 6) return setCloudStatus('Пароль должен содержать минимум 6 символов', true);
+            if (!hasDataConsent()) return setCloudStatus('Перед регистрацией необходимо принять условия и согласие на обработку данных', true);
             const { data, error } = await supabaseClient.auth.signUp({
                 email, password,
-                options: { emailRedirectTo: window.location.origin + window.location.pathname }
+                options: { emailRedirectTo: window.location.origin + window.location.pathname,
+                    data: { full_name: name, privacy_consent: true, privacy_consent_at: new Date().toISOString(), privacy_policy_version: '1.0' }
+                }
             });
             if (error) setCloudStatus(error.message, true);
-            else if (!data.session) setCloudStatus('Проверьте почту и подтвердите регистрацию, затем войдите');
+            else if (!data.session) setCloudStatus('Проверьте почту и подтвердите регистрацию. После подтверждения войдите в аккаунт.');
+            else {
+                currentSupabaseUser = data.user;
+                APP_STATE.user.name = name; APP_STATE.user.email = email;
+                saveLocalStateOnly(); updateCloudAuthUI(); initUserProfile();
+                await syncStateToCloud();
+            }
+        }
+        async function acceptCloudConsent() {
+            if (!currentSupabaseUser) return;
+            if (!hasDataConsent()) return setCloudStatus('Поставьте отметку согласия перед продолжением', true);
+            const { data, error } = await supabaseClient.auth.updateUser({ data: {
+                privacy_consent: true, privacy_consent_at: new Date().toISOString(), privacy_policy_version: '1.0'
+            }});
+            if (error) return setCloudStatus('Не удалось сохранить согласие: ' + error.message, true);
+            currentSupabaseUser = data.user;
+            document.getElementById('cloudConsentAcceptBtn')?.classList.add('hidden');
+            updateCloudAuthUI();
+            await loadStateFromCloud();
         }
         async function cloudSignOut() {
             const { error } = await supabaseClient.auth.signOut();
             if (error) setCloudStatus(error.message, true);
+        }
+
+        const UI_TRANSLATIONS = {
+          kk: {
+            'Cashcontrol — Управление личными финансами':'Cashcontrol — Жеке қаржыны басқару','Политикой конфиденциальности и Пользовательским соглашением':'Құпиялылық саясаты және Пайдаланушы келісімі','Условия использования Cashcontrol и обработка данных':'Cashcontrol пайдалану шарттары және деректерді өңдеу','Персональный финансовый помощник':'Жеке қаржы көмекшісі','Тема оформления':'Безендіру тақырыбы','Личный учет':'Жеке қаржы есебі','Обзор':'Шолу','Счета':'Шоттар','Аналитика':'Талдау','Настройки':'Баптаулар','Пользователь':'Пайдаланушы',
+            'Общий Баланс':'Жалпы баланс','Все доступные счета':'Барлық қолжетімді шоттар','Депозиты':'Депозиттер','Накопления':'Жинақтар','Доходы (Месяц)':'Кірістер (ай)','Все зачисления':'Барлық түсімдер','Расходы (Месяц)':'Шығыстар (ай)','Все списания':'Барлық төлемдер',
+            'Сколько можно потратить':'Қанша жұмсауға болады','Лимит расходов за сегодня':'Бүгінгі шығын лимиті','Потрачено сегодня:':'Бүгін жұмсалды:','Настройка лимита трат:':'Шығын лимитін баптау:','На день':'Күнге','На неделю':'Аптаға','На месяц':'Айға','Добавить Доход':'Кіріс қосу','Добавить Расход':'Шығыс қосу',
+            'Мои счета':'Менің шоттарым','Управлять':'Басқару','Последние транзакции':'Соңғы операциялар','Все →':'Барлығы →','История транзакций пуста':'Операциялар тарихы бос','Счета и Кошельки':'Шоттар мен әмияндар','Управление картами, депозитами и наличными':'Карталарды, депозиттерді және қолма-қол ақшаны басқару','Добавить счет':'Шот қосу','Название счета':'Шот атауы','Тип счета':'Шот түрі','💳 Банковская карта':'💳 Банк картасы','💵 Наличные':'💵 Қолма-қол ақша','🏦 Депозит / Накопления':'🏦 Депозит / Жинақ','+ Создать счет':'+ Шот құру',
+            'Финансовая аналитика':'Қаржылық талдау','Полная статистика расходов и детальная история':'Шығындардың толық статистикасы мен тарихы','Структура Расходов по Категориям':'Санаттар бойынша шығындар','Вся история операций (CRUD)':'Барлық операциялар тарихы',
+            'Настройки и Модули':'Баптаулар мен бөлімдер','Управление профилем, валютой и дополнительными разделами':'Профильді, валютаны және қосымша бөлімдерді басқару','Вишлист':'Армандар тізімі','Цели и накопления':'Мақсаттар мен жинақтар','Долги и Кредиты':'Қарыздар мен несиелер','Учет задолженностей':'Берешекті есепке алу','Календарь смен':'Ауысым күнтізбесі','График работы':'Жұмыс кестесі',
+            'Язык приложения':'Қолданба тілі','Выберите язык интерфейса':'Интерфейс тілін таңдаңыз','Основная валюта':'Негізгі валюта','Символ валюты отображается во всем приложении':'Валюта белгісі бүкіл қолданбада көрсетіледі','Аккаунт и профиль':'Аккаунт және профиль','Один аккаунт для входа и синхронизации счетов, операций, целей, долгов и настроек между устройствами.':'Құрылғылар арасында шоттарды, операцияларды, мақсаттарды, қарыздарды және баптауларды синхрондауға арналған бір аккаунт.','Email':'Email','Пароль (минимум 6 символов)':'Құпиясөз (кемінде 6 таңба)','Я согласен(на) с':'Мен келісемін:',' и даю согласие на хранение и обработку моих финансовых данных для работы Cashcontrol.':' және Cashcontrol жұмысы үшін қаржылық деректерімді сақтауға және өңдеуге келісім беремін.','Подтвердить согласие и включить синхронизацию':'Келісімді растау және синхрондауды қосу','Имя пользователя':'Пайдаланушы аты','Ваше имя':'Атыңыз','Сохранить имя профиля':'Профиль атын сақтау','Правовая информация':'Құқықтық ақпарат','Политика конфиденциальности и Пользовательское соглашение':'Құпиялылық саясаты және Пайдаланушы келісімі',
+            'Войти':'Кіру','Создать аккаунт':'Аккаунт жасау','Выйти из аккаунта':'Аккаунттан шығу','Понятно':'Түсінікті','Тема оформления':'Безендіру тақырыбы','Цветовая гамма интерфейса':'Интерфейс түстері','Светлая':'Ашық','Темная':'Қараңғы','Социальные сети':'Әлеуметтік желілер','Подписывайтесь на наши официальные страницы и следите за обновлениями':'Ресми парақшаларымызға жазылып, жаңалықтарды бақылаңыз'
+          },
+          en: {
+            'Cashcontrol — Управление личными финансами':'Cashcontrol — Personal finance management','Политикой конфиденциальности и Пользовательским соглашением':'Privacy Policy and User Agreement','Условия использования Cashcontrol и обработка данных':'Cashcontrol terms of use and data processing','Персональный финансовый помощник':'Personal finance assistant','Личный учет':'Personal finance','Обзор':'Overview','Счета':'Accounts','Аналитика':'Analytics','Настройки':'Settings','Пользователь':'User','Общий Баланс':'Total balance','Все доступные счета':'All available accounts','Депозиты':'Deposits','Накопления':'Savings','Доходы (Месяц)':'Income (month)','Все зачисления':'All deposits','Расходы (Месяц)':'Expenses (month)','Все списания':'All payments',
+            'Сколько можно потратить':'Available to spend','Лимит расходов за сегодня':"Today's spending limit",'Потрачено сегодня:':'Spent today:','Настройка лимита трат:':'Spending limit settings:','На день':'Daily','На неделю':'Weekly','На месяц':'Monthly','Добавить Доход':'Add income','Добавить Расход':'Add expense','Мои счета':'My accounts','Управлять':'Manage','Последние транзакции':'Recent transactions','Все →':'All →','История транзакций пуста':'No transactions yet','Счета и Кошельки':'Accounts & Wallets','Управление картами, депозитами и наличными':'Manage cards, deposits and cash','Добавить счет':'Add account','Название счета':'Account name','Тип счета':'Account type','💳 Банковская карта':'💳 Bank card','💵 Наличные':'💵 Cash','🏦 Депозит / Накопления':'🏦 Deposit / Savings','+ Создать счет':'+ Create account',
+            'Финансовая аналитика':'Financial analytics','Полная статистика расходов и детальная история':'Expense statistics and detailed history','Структура Расходов по Категориям':'Expenses by category','Вся история операций (CRUD)':'All transactions','Настройки и Модули':'Settings & Modules','Управление профилем, валютой и дополнительными разделами':'Manage profile, currency and extra sections','Вишлист':'Wishlist','Цели и накопления':'Goals and savings','Долги и Кредиты':'Debts & Loans','Учет задолженностей':'Debt tracking','Календарь смен':'Shift calendar','График работы':'Work schedule',
+            'Язык приложения':'App language','Выберите язык интерфейса':'Choose interface language','Основная валюта':'Main currency','Символ валюты отображается во всем приложении':'Currency symbol is used throughout the app','Аккаунт и профиль':'Account & Profile','Один аккаунт для входа и синхронизации счетов, операций, целей, долгов и настроек между устройствами.':'One account to sign in and sync accounts, transactions, goals, debts and settings across devices.','Email':'Email','Пароль (минимум 6 символов)':'Password (at least 6 characters)','Я согласен(на) с':'I agree to the',' и даю согласие на хранение и обработку моих финансовых данных для работы Cashcontrol.':' and consent to the storage and processing of my financial data for Cashcontrol.','Подтвердить согласие и включить синхронизацию':'Confirm consent and enable sync','Имя пользователя':'Display name','Ваше имя':'Your name','Сохранить имя профиля':'Save profile name','Правовая информация':'Legal information','Политика конфиденциальности и Пользовательское соглашение':'Privacy Policy & User Agreement','Войти':'Sign in','Создать аккаунт':'Create account','Выйти из аккаунта':'Sign out','Понятно':'Got it','Тема оформления':'Appearance','Цветовая гамма интерфейса':'Interface color theme','Светлая':'Light','Темная':'Dark','Социальные сети':'Social media','Подписывайтесь на наши официальные страницы и следите за обновлениями':'Follow our official pages for updates'
+          },
+          de: {
+            'Cashcontrol — Управление личными финансами':'Cashcontrol — Persönliche Finanzverwaltung','Политикой конфиденциальности и Пользовательским соглашением':'Datenschutzrichtlinie und Nutzungsvereinbarung','Условия использования Cashcontrol и обработка данных':'Nutzungsbedingungen von Cashcontrol und Datenverarbeitung','Персональный финансовый помощник':'Persönlicher Finanzassistent','Личный учет':'Persönliche Finanzen','Обзор':'Übersicht','Счета':'Konten','Аналитика':'Analyse','Настройки':'Einstellungen','Пользователь':'Benutzer','Общий Баланс':'Gesamtsaldo','Все доступные счета':'Alle verfügbaren Konten','Депозиты':'Einlagen','Накопления':'Ersparnisse','Доходы (Месяц)':'Einnahmen (Monat)','Все зачисления':'Alle Gutschriften','Расходы (Месяц)':'Ausgaben (Monat)','Все списания':'Alle Abbuchungen',
+            'Сколько можно потратить':'Verfügbar zum Ausgeben','Лимит расходов за сегодня':'Heutiges Ausgabenlimit','Потрачено сегодня:':'Heute ausgegeben:','Настройка лимита трат:':'Ausgabenlimit einstellen:','На день':'Pro Tag','На неделю':'Pro Woche','На месяц':'Pro Monat','Добавить Доход':'Einnahme hinzufügen','Добавить Расход':'Ausgabe hinzufügen','Мои счета':'Meine Konten','Управлять':'Verwalten','Последние транзакции':'Letzte Transaktionen','Все →':'Alle →','История транзакций пуста':'Noch keine Transaktionen','Счета и Кошельки':'Konten & Geldbörsen','Управление картами, депозитами и наличными':'Karten, Einlagen und Bargeld verwalten','Добавить счет':'Konto hinzufügen','Название счета':'Kontoname','Тип счета':'Kontotyp','💳 Банковская карта':'💳 Bankkarte','💵 Наличные':'💵 Bargeld','🏦 Депозит / Накопления':'🏦 Einlage / Ersparnisse','+ Создать счет':'+ Konto erstellen',
+            'Финансовая аналитика':'Finanzanalyse','Полная статистика расходов и детальная история':'Ausgabenstatistik und Verlauf','Структура Расходов по Категориям':'Ausgaben nach Kategorien','Вся история операций (CRUD)':'Alle Transaktionen','Настройки и Модули':'Einstellungen & Module','Управление профилем, валютой и дополнительными разделами':'Profil, Währung und weitere Bereiche verwalten','Вишлист':'Wunschliste','Цели и накопления':'Ziele und Ersparnisse','Долги и Кредиты':'Schulden & Kredite','Учет задолженностей':'Schuldenverwaltung','Календарь смен':'Schichtkalender','График работы':'Arbeitsplan',
+            'Язык приложения':'App-Sprache','Выберите язык интерфейса':'Sprache der Benutzeroberfläche wählen','Основная валюта':'Hauptwährung','Символ валюты отображается во всем приложении':'Währungssymbol wird in der gesamten App angezeigt','Аккаунт и профиль':'Konto & Profil','Один аккаунт для входа и синхронизации счетов, операций, целей, долгов и настроек между устройствами.':'Ein Konto zum Anmelden und Synchronisieren von Konten, Transaktionen, Zielen, Schulden und Einstellungen auf allen Geräten.','Email':'E-Mail','Пароль (минимум 6 символов)':'Passwort (mindestens 6 Zeichen)','Я согласен(на) с':'Ich stimme der',' и даю согласие на хранение и обработку моих финансовых данных для работы Cashcontrol.':' zu und willige in die Speicherung und Verarbeitung meiner Finanzdaten für Cashcontrol ein.','Подтвердить согласие и включить синхронизацию':'Zustimmung bestätigen und Synchronisierung aktivieren','Имя пользователя':'Anzeigename','Ваше имя':'Ihr Name','Сохранить имя профиля':'Profilnamen speichern','Правовая информация':'Rechtliche Informationen','Политика конфиденциальности и Пользовательское соглашение':'Datenschutzrichtlinie & Nutzungsvereinbarung','Войти':'Anmelden','Создать аккаунт':'Konto erstellen','Выйти из аккаунта':'Abmelden','Понятно':'Verstanden','Тема оформления':'Darstellung','Цветовая гамма интерфейса':'Farbschema der Oberfläche','Светлая':'Hell','Темная':'Dunkel','Социальные сети':'Soziale Netzwerke','Подписывайтесь на наши официальные страницы и следите за обновлениями':'Folgen Sie unseren offiziellen Seiten für Neuigkeiten'
+          }
+        };
+        function setLanguage(language) {
+            APP_STATE.language = ['kk','ru','en','de'].includes(language) ? language : 'ru';
+            localStorage.setItem('cashcontrol_language', APP_STATE.language);
+            document.documentElement.lang = APP_STATE.language;
+            const selector = document.getElementById('settingLanguageSelect');
+            if (selector) selector.value = APP_STATE.language;
+            applyTranslations(); saveLocalStateOnly();
+            if (currentSupabaseUser) syncStateToCloud();
+        }
+        Object.keys({'kk':1,'en':1,'de':1}) .forEach(lang => Object.assign(UI_TRANSLATIONS[lang], {'kk': {'в день': 'күніне', 'Начальный баланс (': 'Бастапқы баланс (', 'Цвет карточки:': 'Карточка түсі:', 'Новая цель': 'Жаңа мақсат', 'Желаемые покупки и отслеживание накоплений': 'Қалаған сатып алулар мен жинақты бақылау', 'Добавить задолженность': 'Берешек қосу', 'Контроль займов, рассрочек и выданных в долг средств': 'Қарыздарды, бөліп төлеуді және берілген ақшаны бақылау', 'Мои долги (Кредиты / Я должна)': 'Менің қарыздарым (несиелер)', 'Мне должны': 'Маған қарыз', 'Закрытые платежи': 'Жабылған төлемдер', 'Остаток задолженности': 'Қалған берешек', 'Отметить смену': 'Ауысымды белгілеу', 'Учет графика смен, часов и предварительного заработка': 'Ауысым кестесін, сағаттарды және болжамды табысты есепке алу', 'Отработано смен': 'Жұмыс істеген ауысымдар', 'Заработок (журнал)': 'Табыс (журнал)', 'Выходные / Отпуск': 'Демалыс / еңбек демалысы', 'Опции': 'Параметрлер', 'Операция': 'Операция', 'Дата операции': 'Операция күні', 'Куда тратятся деньги (Категория)': 'Ақша қайда жұмсалады (санат)', 'Откуда берутся деньги (Источник)': 'Ақша қайдан түседі (көз)', 'Комментарий': 'Түсініктеме', 'Записать операцию': 'Операцияны сақтау', 'Новая цель в Вишлист': 'Армандар тізіміндегі жаңа мақсат', 'Название цели': 'Мақсат атауы', 'Ссылка на фото предмета': 'Зат фотосының сілтемесі', 'Целевая сумма (': 'Мақсатты сома (', 'Способ накопления (Счет / Депозит)': 'Жинақтау тәсілі (шот / депозит)', 'Добавить в Вишлист': 'Армандар тізіміне қосу', 'Накопление на цель': 'Мақсатқа жинау', 'Сумма пополнения (': 'Толықтыру сомасы (', 'Откуда списать средства?': 'Қаражат қай шоттан алынады?', 'Отложить средства': 'Қаражатты жинаққа аудару', 'Отмена': 'Болдырмау', 'Кредит / Долг': 'Несие / Қарыз', 'Готово': 'Дайын', 'Сумма кредита': 'Несие сомасы', 'Валюта': 'Валюта', 'Условия': 'Шарттар', 'Срок, мес': 'Мерзімі, ай', 'Ставка, % годовых': 'Жылдық мөлшерлеме, %', 'Когда платить': 'Төлеу күні', 'Каждое число': 'Әр айдың осы күні', 'Напоминание': 'Еске салу', 'Напоминать о платеже': 'Төлем туралы еске салу', 'За сколько': 'Қанша күн бұрын', 'За 1 день': '1 күн бұрын', 'За 3 дня': '3 күн бұрын', 'За 5 дней': '5 күн бұрын', 'Регистрация рабочего дня': 'Жұмыс күнін тіркеу', 'Дата смены': 'Ауысым күні', 'Тип смены': 'Ауысым түрі', '🌙 Ночная смена': '🌙 Түнгі ауысым', '☀️ Дневная смена': '☀️ Күндізгі ауысым', '🌅 Утренняя смена': '🌅 Таңғы ауысым', '☕ Выходной': '☕ Демалыс', '🌴 Отпуск': '🌴 Еңбек демалысы', 'Заработок за смену (': 'Ауысым үшін табыс (', 'Опция зачисления:': 'Есепке алу параметрі:', 'Просто отметить смену (не добавлять в счета)': 'Тек ауысымды белгілеу (шотқа қоспау)', 'Рассчитать сразу на счет': 'Бірден шотқа есептеу', 'Выберите счет для зачисления:': 'Түсіру үшін шотты таңдаңыз:', 'Добавить смену': 'Ауысым қосу', 'Сумма зачислится как поступление и увеличит остаток, но в «Доходы» не попадет.': 'Сома шотқа түсіп, қалдықты арттырады, бірақ «Кірістер» бөліміне қосылмайды.', 'Платеж рассчитается по аннуитету из суммы, срока и ставки.': 'Төлем сомасы, мерзімі және мөлшерлемесі бойынша аннуитетпен есептеледі.', 'Платеж появится в «Обязательных тратах». Отметить оплаченным — остаток кредита уменьшится.': 'Төлем «Міндетті шығындар» бөлімінде пайда болады. Төленді деп белгілеу несие қалдығын азайтады.'}, 'en': {'в день': 'per day', 'Начальный баланс (': 'Opening balance (', 'Цвет карточки:': 'Card color:', 'Новая цель': 'New goal', 'Желаемые покупки и отслеживание накоплений': 'Wish-list purchases and savings tracking', 'Добавить задолженность': 'Add debt', 'Контроль займов, рассрочек и выданных в долг средств': 'Track loans, installments and money lent', 'Мои долги (Кредиты / Я должна)': 'My debts (loans / I owe)', 'Мне должны': 'Owed to me', 'Закрытые платежи': 'Payments completed', 'Остаток задолженности': 'Outstanding balance', 'Отметить смену': 'Mark a shift', 'Учет графика смен, часов и предварительного заработка': 'Track shifts, hours and estimated earnings', 'Отработано смен': 'Shifts worked', 'Заработок (журнал)': 'Earnings (log)', 'Выходные / Отпуск': 'Days off / Vacation', 'Опции': 'Options', 'Операция': 'Transaction', 'Дата операции': 'Transaction date', 'Куда тратятся деньги (Категория)': 'Where the money goes (category)', 'Откуда берутся деньги (Источник)': 'Where the money comes from (source)', 'Комментарий': 'Note', 'Записать операцию': 'Save transaction', 'Новая цель в Вишлист': 'New wishlist goal', 'Название цели': 'Goal name', 'Ссылка на фото предмета': 'Item photo URL', 'Целевая сумма (': 'Target amount (', 'Способ накопления (Счет / Депозит)': 'Savings method (account / deposit)', 'Добавить в Вишлист': 'Add to wishlist', 'Накопление на цель': 'Add to goal', 'Сумма пополнения (': 'Top-up amount (', 'Откуда списать средства?': 'Deduct from account', 'Отложить средства': 'Set money aside', 'Отмена': 'Cancel', 'Кредит / Долг': 'Loan / Debt', 'Готово': 'Done', 'Сумма кредита': 'Loan amount', 'Валюта': 'Currency', 'Условия': 'Terms', 'Срок, мес': 'Term, months', 'Ставка, % годовых': 'Annual interest rate, %', 'Когда платить': 'Payment date', 'Каждое число': 'Same day each month', 'Напоминание': 'Reminder', 'Напоминать о платеже': 'Remind me about payment', 'За сколько': 'How early', 'За 1 день': '1 day before', 'За 3 дня': '3 days before', 'За 5 дней': '5 days before', 'Регистрация рабочего дня': 'Log a work shift', 'Дата смены': 'Shift date', 'Тип смены': 'Shift type', '🌙 Ночная смена': '🌙 Night shift', '☀️ Дневная смена': '☀️ Day shift', '🌅 Утренняя смена': '🌅 Morning shift', '☕ Выходной': '☕ Day off', '🌴 Отпуск': '🌴 Vacation', 'Заработок за смену (': 'Earnings per shift (', 'Опция зачисления:': 'Credit option:', 'Просто отметить смену (не добавлять в счета)': 'Just log the shift (do not add to accounts)', 'Рассчитать сразу на счет': 'Add earnings to an account', 'Выберите счет для зачисления:': 'Choose an account to credit:', 'Добавить смену': 'Add shift', 'Сумма зачислится как поступление и увеличит остаток, но в «Доходы» не попадет.': 'The amount will increase the account balance but will not appear under Income.', 'Платеж рассчитается по аннуитету из суммы, срока и ставки.': 'The payment is calculated using the loan amount, term and interest rate.', 'Платеж появится в «Обязательных тратах». Отметить оплаченным — остаток кредита уменьшится.': 'The payment appears under Required expenses. Marking it paid reduces the remaining loan balance.'}, 'de': {'в день': 'pro Tag', 'Начальный баланс (': 'Anfangssaldo (', 'Цвет карточки:': 'Kartenfarbe:', 'Новая цель': 'Neues Ziel', 'Желаемые покупки и отслеживание накоплений': 'Wunschliste und Sparziele verfolgen', 'Добавить задолженность': 'Schuld hinzufügen', 'Контроль займов, рассрочек и выданных в долг средств': 'Kredite, Ratenzahlungen und verliehenes Geld verfolgen', 'Мои долги (Кредиты / Я должна)': 'Meine Schulden (Kredite / ich schulde)', 'Мне должны': 'Mir geschuldet', 'Закрытые платежи': 'Abgeschlossene Zahlungen', 'Остаток задолженности': 'Offener Schuldenbetrag', 'Отметить смену': 'Schicht markieren', 'Учет графика смен, часов и предварительного заработка': 'Schichten, Stunden und voraussichtliche Einnahmen erfassen', 'Отработано смен': 'Gearbeitete Schichten', 'Заработок (журнал)': 'Einnahmen (Protokoll)', 'Выходные / Отпуск': 'Freie Tage / Urlaub', 'Опции': 'Optionen', 'Операция': 'Transaktion', 'Дата операции': 'Transaktionsdatum', 'Куда тратятся деньги (Категория)': 'Wofür wird Geld ausgegeben (Kategorie)', 'Откуда берутся деньги (Источник)': 'Woher kommt das Geld (Quelle)', 'Комментарий': 'Notiz', 'Записать операцию': 'Transaktion speichern', 'Новая цель в Вишлист': 'Neues Wunschlistenziel', 'Название цели': 'Zielname', 'Ссылка на фото предмета': 'URL des Artikelfotos', 'Целевая сумма (': 'Zielbetrag (', 'Способ накопления (Счет / Депозит)': 'Sparart (Konto / Einlage)', 'Добавить в Вишлист': 'Zur Wunschliste hinzufügen', 'Накопление на цель': 'Für ein Ziel sparen', 'Сумма пополнения (': 'Aufladebetrag (', 'Откуда списать средства?': 'Von welchem Konto abbuchen?', 'Отложить средства': 'Geld zurücklegen', 'Отмена': 'Abbrechen', 'Кредит / Долг': 'Kredit / Schuld', 'Готово': 'Fertig', 'Сумма кредита': 'Kreditsumme', 'Валюта': 'Währung', 'Условия': 'Konditionen', 'Срок, мес': 'Laufzeit, Monate', 'Ставка, % годовых': 'Jahreszins, %', 'Когда платить': 'Zahlungstermin', 'Каждое число': 'Jeden Monat am selben Tag', 'Напоминание': 'Erinnerung', 'Напоминать о платеже': 'An Zahlung erinnern', 'За сколько': 'Wie früh', 'За 1 день': '1 Tag vorher', 'За 3 дня': '3 Tage vorher', 'За 5 дней': '5 Tage vorher', 'Регистрация рабочего дня': 'Arbeitsschicht erfassen', 'Дата смены': 'Schichtdatum', 'Тип смены': 'Schichttyp', '🌙 Ночная смена': '🌙 Nachtschicht', '☀️ Дневная смена': '☀️ Tagschicht', '🌅 Утренняя смена': '🌅 Frühschicht', '☕ Выходной': '☕ Freier Tag', '🌴 Отпуск': '🌴 Urlaub', 'Заработок за смену (': 'Verdienst pro Schicht (', 'Опция зачисления:': 'Gutschriftoption:', 'Просто отметить смену (не добавлять в счета)': 'Nur Schicht erfassen (nicht den Konten hinzufügen)', 'Рассчитать сразу на счет': 'Direkt einem Konto gutschreiben', 'Выберите счет для зачисления:': 'Konto für die Gutschrift wählen:', 'Добавить смену': 'Schicht hinzufügen', 'Сумма зачислится как поступление и увеличит остаток, но в «Доходы» не попадет.': 'Der Betrag erhöht den Kontostand, erscheint aber nicht unter Einnahmen.', 'Платеж рассчитается по аннуитету из суммы, срока и ставки.': 'Die Rate wird anhand von Betrag, Laufzeit und Zinssatz berechnet.', 'Платеж появится в «Обязательных тратах». Отметить оплаченным — остаток кредита уменьшится.': 'Die Rate erscheint unter Pflichtausgaben. Als bezahlt markiert, verringert sie den Kreditsaldo.'}}[lang]));
+        const translationOriginals = new WeakMap();
+        function applyTranslations() {
+            const lang = APP_STATE.language || 'ru';
+            const dict = UI_TRANSLATIONS[lang] || {};
+            const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT);
+            let node;
+            while ((node = walker.nextNode())) {
+                if (!node.parentElement || ['SCRIPT','STYLE'].includes(node.parentElement.tagName)) continue;
+                if (!translationOriginals.has(node)) translationOriginals.set(node, node.nodeValue);
+                const original = translationOriginals.get(node);
+                const trimmed = original.trim();
+                node.nodeValue = (lang === 'ru' || !dict[trimmed]) ? original : original.replace(trimmed, dict[trimmed]);
+            }
+            document.querySelectorAll('input[placeholder],textarea[placeholder]').forEach(el => {
+                if (!el.dataset.basePlaceholder) el.dataset.basePlaceholder = el.placeholder;
+                const original = el.dataset.basePlaceholder;
+                el.placeholder = lang === 'ru' ? original : (dict[original] || original);
+            });
+            const select = document.getElementById('settingLanguageSelect');
+            if (select) select.value = lang;
         }
 
         function changeCurrency(curr) {
@@ -1115,7 +1283,10 @@ try {
             renderGoals();
             renderDebts();
             renderShifts();
+            renderRecurring();
+            renderReminderList();
             updateCurrencyUI();
+            applyTranslations();
         }
 
         // OVERVIEW STATS & BUDGET LIMIT
@@ -1250,6 +1421,7 @@ try {
         }
 
         function deleteAccount(id) {
+            if(APP_STATE.transactions.some(t=>t.accountId===id||t.toAccountId===id))return alert('Сначала удалите связанные операции');
             if (confirm('Удалить счет?')) {
                 APP_STATE.accounts = APP_STATE.accounts.filter(a => a.id !== id);
                 saveState();
@@ -1276,6 +1448,8 @@ try {
             sorted.forEach((t, index) => {
                 const acc = APP_STATE.accounts.find(a => a.id === t.accountId);
                 const isIncome = t.type === 'income';
+                const isTransfer = t.type === 'transfer';
+                const isDebtReturn=t.type==='debt_return';
 
                 const item = document.createElement('div');
                 item.className = "flex items-center justify-between p-3 rounded-2xl bg-slate-50 dark:bg-slate-800/40 border border-slate-100 dark:border-slate-800/60";
@@ -1285,15 +1459,15 @@ try {
                             <i class="fa-solid ${isIncome ? 'fa-arrow-down-left' : 'fa-arrow-up-right'}"></i>
                         </div>
                         <div class="truncate">
-                            <p class="font-bold text-xs truncate leading-tight">${t.category} ${t.note ? `<span class="text-slate-400 font-normal">(${t.note})</span>` : ''}</p>
-                            <p class="text-[10px] text-slate-400 mt-0.5 truncate">${acc ? acc.name : 'Счет'} • ${new Date(t.date).toLocaleDateString()}</p>
+                            <p class="font-bold text-xs truncate leading-tight">${esc(t.category)} ${t.note ? `<span class="text-slate-400 font-normal">(${esc(t.note)})</span>` : ''}</p>
+                            <p class="text-[10px] text-slate-400 mt-0.5 truncate">${acc ? esc(acc.name) : 'Счет'} • ${new Date(t.date).toLocaleDateString()}</p>
                         </div>
                     </div>
                     <div class="flex items-center gap-2 shrink-0">
                         <span class="font-black text-xs ${isIncome ? 'text-emerald-600 dark:text-emerald-400' : 'text-slate-900 dark:text-white'}">
-                            ${isIncome ? '+' : '-'}${Number(t.amount).toLocaleString()} ${sym}
+                            ${isTransfer ? '↔' : (isIncome||isDebtReturn) ? '+' : '-'}${Number(t.amount).toLocaleString()} ${sym}
                         </span>
-                        <button onclick="editTransaction('${t.id}')" class="text-slate-400 hover:text-brand-500 text-xs p-1"><i class="fa-solid fa-pen"></i></button>
+                        <button ${(isTransfer||isDebtReturn)?'class="hidden"':''} onclick="editTransaction('${t.id}')" class="text-slate-400 hover:text-brand-500 text-xs p-1"><i class="fa-solid fa-pen"></i></button>
                         <button onclick="deleteTransaction('${t.id}')" class="text-slate-400 hover:text-rose-500 text-xs p-1"><i class="fa-solid fa-trash"></i></button>
                     </div>
                 `;
@@ -1390,6 +1564,7 @@ try {
             const t = APP_STATE.transactions.find(tx => tx.id === id);
             if (!t) return;
 
+            if(t.type==='transfer'||t.type==='debt_return')return;
             openTransactionModal(t.type);
             document.getElementById('txId').value = t.id;
             document.getElementById('txAmount').value = t.amount;
@@ -1411,7 +1586,7 @@ try {
             if (confirm('Удалить эту операцию?')) {
                 const acc = APP_STATE.accounts.find(a => a.id === t.accountId);
                 if (acc) {
-                    if (t.type === 'expense') acc.balance += Number(t.amount);
+                    if(t.type==='debt_return'){acc.balance-=Number(t.amount);const d=APP_STATE.debts.find(d=>d.type==='owed_to_me'&&d.paid&&d.bank===t.note&&Number(d.amount)===Number(t.amount));if(d)d.paid=false;}else if(t.type==='transfer'){acc.balance+=Number(t.amount);const dest=APP_STATE.accounts.find(a=>a.id===t.toAccountId);if(dest)dest.balance-=Number(t.amount);}else if (t.type === 'expense') acc.balance += Number(t.amount);
                     else acc.balance -= Number(t.amount);
                 }
                 APP_STATE.transactions = APP_STATE.transactions.filter(tx => tx.id !== id);
@@ -1599,13 +1774,13 @@ try {
                         <h4 class="font-bold text-sm">${debt.bank}</h4>
                         <p class="text-xl font-extrabold text-rose-600 dark:text-rose-400 mt-0.5">${Number(debt.amount).toLocaleString()} ${CURRENCY_SYMBOLS[debt.currency] || sym}</p>
                         <div class="text-[11px] text-slate-400 mt-2 space-y-0.5">
-                            <p>Срок: ${debt.term} мес. | Ставка: ${debt.rate}%</p>
-                            <p>Оплата: Каждое ${debt.payDay}-е число</p>
+                            ${debt.type==='owed_to_me'?'':`<p>Срок: ${debt.term} мес. | Ставка: ${debt.rate}%</p>`}
+                            ${debt.type==='owed_to_me'?'':`<p>Оплата: Каждое ${debt.payDay}-е число</p>`}
                         </div>
                     </div>
                     ${!isPaid ? `
                         <button onclick="payOffDebt('${debt.id}')" class="w-full py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded-xl transition">
-                            Отметить как закрытый
+                            ${debt.type==='owed_to_me'?'Вернули деньги':'Отметить как закрытый'}
                         </button>
                     ` : ''}
                 `;
@@ -1615,7 +1790,8 @@ try {
 
         function openCreditModal() {
             document.getElementById('creditType').value = APP_STATE.activeDebtTab;
-            document.getElementById('creditModalTitle').textContent = APP_STATE.activeDebtTab === 'my_debts' ? 'Кредит / Долг' : 'Мне должны';
+            document.getElementById('creditModalTitle').textContent = APP_STATE.activeDebtTab === 'my_debts' ? 'Кредит / Долг' : 'Кто вам должен?';
+            document.querySelectorAll('.loan-only').forEach(el=>el.classList.toggle('hidden',APP_STATE.activeDebtTab==='owed_to_me'));
             document.getElementById('modalCredit').classList.remove('hidden');
         }
 
@@ -1630,6 +1806,7 @@ try {
             const notif = document.getElementById('creditNotifToggle').checked;
             const notifDays = document.getElementById('creditNotifDays').value;
             const type = document.getElementById('creditType').value;
+            if(!bank || !Number.isFinite(amount) || amount<=0)return alert('Введите имя и сумму');
 
             APP_STATE.debts.push({
                 id: Date.now().toString(),
@@ -1654,6 +1831,7 @@ try {
         function payOffDebt(id) {
             const debt = APP_STATE.debts.find(d => d.id === id);
             if (debt) {
+                if(debt.type==='owed_to_me')return receiveDebt(id);
                 debt.paid = true;
                 saveState();
                 showToast('Долг отмечен закрытым!');
@@ -1817,30 +1995,26 @@ try {
 
         // USER PROFILE
         function initUserProfile() {
-            document.getElementById('settingUserName').value = APP_STATE.user.name;
-            document.getElementById('settingUserEmail').value = APP_STATE.user.email;
-            document.getElementById('userNameDisplay').textContent = APP_STATE.user.name;
-            document.getElementById('userEmailDisplay').textContent = APP_STATE.user.email;
-            document.getElementById('userAvatar').textContent = APP_STATE.user.name.charAt(0).toUpperCase();
+            const name = APP_STATE.user?.name || currentSupabaseUser?.user_metadata?.full_name || 'Пользователь';
+            const email = currentSupabaseUser?.email || APP_STATE.user?.email || 'Аккаунт не подключен';
+            const nameInput = document.getElementById('settingUserName');
+            if (nameInput && (!nameInput.value || currentSupabaseUser)) nameInput.value = name;
+            document.getElementById('userNameDisplay').textContent = name;
+            document.getElementById('userEmailDisplay').textContent = email;
+            document.getElementById('userAvatar').textContent = name.charAt(0).toUpperCase();
         }
 
-        function saveUserProfile(e) {
-            e.preventDefault();
+        async function saveUserProfile() {
             const name = document.getElementById('settingUserName').value.trim();
-            const email = document.getElementById('settingUserEmail').value.trim();
-
-            if (!email.includes('@') || !email.includes('.')) {
-                alert('Пожалуйста, введите корректный адрес электронной почты!');
-                return;
-            }
-
+            if (!name) return setCloudStatus('Введите имя пользователя', true);
             APP_STATE.user.name = name;
-            APP_STATE.user.email = email;
-            document.getElementById('settingUserPassword').value = '';
-
-            saveState();
-            initUserProfile();
-            showToast('Профиль сохранен!');
+            if (currentSupabaseUser) {
+                const { data, error } = await supabaseClient.auth.updateUser({ data: { full_name: name } });
+                if (error) return setCloudStatus('Не удалось обновить профиль: ' + error.message, true);
+                currentSupabaseUser = data.user;
+                APP_STATE.user.email = currentSupabaseUser.email || APP_STATE.user.email;
+            }
+            saveState(); initUserProfile(); showToast('Профиль сохранен');
         }
 
         function closeModal(id) {
@@ -1858,29 +2032,57 @@ try {
         function openPrivacyModal() {
     document.getElementById('modalPrivacy').classList.remove('hidden');
 }
-    </script>
+    
+        // Cashcontrol additional features. Transfers never count as income or expense.
+        const EXPENSE_CATS=['Семья','Дом и вещи','Продукты','Еда вне дома','Отдых','Авто и дорога','Подписки','Другое'];
+        const INCOME_CATS=['Аванс','Зарплата','Подарок','Возврат','Стипендия','Другое'];
+        function esc(v){return String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
+        function chooseCategory(kind,val){const el=document.getElementById('txCategory'+kind+'Input');if(el)el.value=val==='Другое'?'':val;}
+        function initCategories(){for(const kind of ['Expense','Income']){const el=document.getElementById('txCategory'+kind+'Preset');if(el)el.innerHTML='<option value="">Выберите категорию</option>'+(kind==='Expense'?EXPENSE_CATS:INCOME_CATS).map(c=>'<option>'+esc(c)+'</option>').join('');}}
+        function openTransferModal(){if(APP_STATE.accounts.length<2)return showToast('Создайте минимум два счета');const options=APP_STATE.accounts.map(a=>`<option value="${esc(a.id)}">${esc(a.name)}</option>`).join('');document.getElementById('transferFrom').innerHTML=options;document.getElementById('transferTo').innerHTML=options;document.getElementById('transferTo').selectedIndex=1;document.getElementById('transferAmount').value='';document.getElementById('modalTransfer').classList.remove('hidden');}
+        function submitTransfer(e){e.preventDefault();const from=APP_STATE.accounts.find(a=>a.id===document.getElementById('transferFrom').value),to=APP_STATE.accounts.find(a=>a.id===document.getElementById('transferTo').value),amount=Number(document.getElementById('transferAmount').value);if(!from||!to||from===to||!Number.isFinite(amount)||amount<=0)return alert('Проверьте счета и сумму');if(Number(from.balance)<amount)return alert('Недостаточно средств');from.balance=Number(from.balance)-amount;to.balance=Number(to.balance)+amount;APP_STATE.transactions.push({id:crypto.randomUUID(),type:'transfer',amount,accountId:from.id,toAccountId:to.id,category:'Перевод',note:from.name+' → '+to.name,date:new Date().toISOString()});saveState();closeModal('modalTransfer');showToast('Перевод выполнен');}
+        function setPalette(v){APP_STATE.palette=v;applyPalette();saveState();}
+        function applyPalette(){const colors={graphite:['#475569','#334155'],blue:['#2563eb','#1d4ed8'],red:['#e11d48','#be123c'],emerald:['#059669','#047857'],purple:['#7c3aed','#6d28d9']};const [a,b]=colors[APP_STATE.palette]||colors.graphite;document.documentElement.style.setProperty('--cc-primary',a);document.documentElement.style.setProperty('--cc-hover',b);const el=document.getElementById('paletteSelect');if(el)el.value=APP_STATE.palette;}
+        function openRecurringModal(){document.getElementById('modalRecurring').classList.remove('hidden');}
+        function submitRecurring(e){e.preventDefault();const r={id:crypto.randomUUID(),name:document.getElementById('recName').value.trim(),amount:Number(document.getElementById('recAmount').value),category:document.getElementById('recCategory').value,day:Number(document.getElementById('recDay').value),time:document.getElementById('recTime').value,before:Number(document.getElementById('recBefore').value),notify:document.getElementById('recNotify').checked,record:document.getElementById('recRecord').checked,paidMonths:[]};if(!r.name||!Number.isFinite(r.amount)||r.amount<=0)return;APP_STATE.recurring.push(r);saveState();closeModal('modalRecurring');e.target.reset();showToast('Платёж добавлен');}
+        function monthKey(){const d=new Date();return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0');}
+        function deleteRecurring(id){if(!confirm('Удалить регулярный платёж?'))return;APP_STATE.recurring=APP_STATE.recurring.filter(r=>r.id!==id);saveState();}
+        function payRecurring(id){const r=APP_STATE.recurring.find(x=>x.id===id);if(!r||r.paidMonths?.includes(monthKey()))return;let acc=null;if(r.record){if(!APP_STATE.accounts.length)return alert('Сначала добавьте счёт');const names=APP_STATE.accounts.map((a,i)=>`${i+1}. ${a.name}`).join('\n');const index=Number(prompt('Выберите счёт для списания:\n'+names,'1'))-1;acc=APP_STATE.accounts[index];if(!acc)return;}
+          r.paidMonths=r.paidMonths||[];r.paidMonths.push(monthKey());if(acc){acc.balance=Number(acc.balance)-Number(r.amount);APP_STATE.transactions.push({id:crypto.randomUUID(),type:'expense',amount:r.amount,accountId:acc.id,category:r.category,note:r.name+' (обязательный платёж)',date:new Date().toISOString()});}saveState();showToast('Оплата отмечена');}
+        function renderRecurring(){const box=document.getElementById('recurringList');if(!box)return;box.innerHTML=APP_STATE.recurring.length?APP_STATE.recurring.map(r=>{const paid=r.paidMonths?.includes(monthKey());return `<div class="p-3 rounded-xl bg-slate-100 dark:bg-slate-800 text-xs"><div class="flex justify-between gap-2"><b>${esc(r.name)}</b><b>${Number(r.amount).toLocaleString()} ${CURRENCY_SYMBOLS[APP_STATE.currency]}</b></div><p class="text-slate-400 mt-1">Каждое ${r.day}-е · ${esc(r.time)} · ${r.notify?'🔔':'🔕'} ${paid?'· Оплачено':''}</p><div class="flex gap-2 mt-2">${paid?'':`<button onclick="payRecurring('${r.id}')" class="px-3 py-2 bg-emerald-600 text-white rounded-lg">Отметить оплачено</button>`}<button onclick="deleteRecurring('${r.id}')" class="px-3 py-2 bg-slate-200 dark:bg-slate-700 rounded-lg">Удалить</button></div></div>`}).join(''):'<p class="text-xs text-slate-400">Платежей пока нет</p>';}
+        async function toggleReminders(on){if(on&&'Notification'in window&&Notification.permission==='default'){const perm=await Notification.requestPermission();if(perm!=='granted')showToast('Разрешение на уведомления не получено');}APP_STATE.remindersEnabled=on;saveState();checkReminders();}
+        function reminderDue(r){const now=new Date(),target=new Date(now.getFullYear(),now.getMonth(),Math.min(r.day,new Date(now.getFullYear(),now.getMonth()+1,0).getDate()),...(r.time||'10:00').split(':').map(Number));target.setDate(target.getDate()-Number(r.before||0));return now>=target&&!r.paidMonths?.includes(monthKey());}
+        function renderReminderList(){const el=document.getElementById('remindersList');if(!el)return;const toggle=document.getElementById('remindersEnabled');if(toggle)toggle.checked=APP_STATE.remindersEnabled;const due=APP_STATE.recurring.filter(r=>r.notify&&reminderDue(r));const debts=APP_STATE.debts.filter(d=>d.type==='my_debts'&&d.notif&&!d.paid).map(d=>({name:'Кредит: '+d.bank,amount:d.amount}));el.innerHTML=(due.length||debts.length)?due.concat(debts).map(r=>`<p class="text-xs p-2 rounded-lg bg-amber-50 dark:bg-amber-950/30">🔔 ${esc(r.name)} — ${Number(r.amount).toLocaleString()} ${CURRENCY_SYMBOLS[APP_STATE.currency]}</p>`).join(''):'<p class="text-xs text-slate-400">Нет активных напоминаний на сегодня</p>';}
+        function checkReminders(){if(!APP_STATE.remindersEnabled)return;const key=monthKey();for(const r of APP_STATE.recurring){if(!r.notify||!reminderDue(r))continue;const seenKey='cashcontrol_notified_'+key+'_'+r.id;if(localStorage.getItem(seenKey))continue;localStorage.setItem(seenKey,'1');if('Notification'in window&&Notification.permission==='granted')new Notification('Cashcontrol: '+r.name,{body:'Платёж '+Number(r.amount).toLocaleString()+' '+CURRENCY_SYMBOLS[APP_STATE.currency]});else showToast('Напоминание: '+r.name);}}
+        function showAsylPreview(){const expenses=APP_STATE.transactions.filter(t=>t.type==='expense');const sum=expenses.reduce((a,t)=>a+Number(t.amount),0);const groups={};for(const t of expenses)groups[t.category]=(groups[t.category]||0)+Number(t.amount);const top=Object.entries(groups).sort((a,b)=>b[1]-a[1])[0];document.getElementById('asylResult').textContent=`Локальная статистика (не ИИ): расходов ${sum.toLocaleString()} ${CURRENCY_SYMBOLS[APP_STATE.currency]}. ${top?'Больше всего: '+top[0]+' — '+top[1].toLocaleString(): 'Добавьте расходы для анализа.'}`;}
+        document.addEventListener('DOMContentLoaded',()=>{initCategories();applyPalette();renderRecurring();renderReminderList();checkReminders();setInterval(()=>{checkReminders();renderReminderList();},60000);});
+
+
+        function receiveDebt(id){const d=APP_STATE.debts.find(x=>x.id===id);if(!d||d.paid)return;const record=confirm('Деньги вернули. Добавить сумму на один из счетов?');let acc=null;if(record){if(!APP_STATE.accounts.length)return alert('Сначала добавьте счет');const index=Number(prompt('На какой счёт поступили деньги?\n'+APP_STATE.accounts.map((a,i)=>(i+1)+'. '+a.name).join('\n'),'1'))-1;acc=APP_STATE.accounts[index];if(!acc)return;acc.balance=Number(acc.balance)+Number(d.amount);APP_STATE.transactions.push({id:crypto.randomUUID(),type:'debt_return',accountId:acc.id,amount:Number(d.amount),category:'Возврат долга',note:d.bank,date:new Date().toISOString()});}d.paid=true;saveState();showToast('Возврат долга сохранён');}
+</script>
     <!-- MODAL: PRIVACY POLICY -->
 <div id="modalPrivacy" class="fixed inset-0 bg-slate-950/60 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
     <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 w-full max-w-lg rounded-3xl p-6 space-y-4 shadow-2xl max-h-[85vh] flex flex-col">
         <div class="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-3">
-            <h3 class="font-bold text-lg">Политика конфиденциальности</h3>
+            <h3 class="font-bold text-lg">Политика конфиденциальности и Пользовательское соглашение</h3>
             <button onclick="closeModal('modalPrivacy')" class="text-slate-400 hover:text-slate-600">
                 <i class="fa-solid fa-xmark text-lg"></i>
             </button>
         </div>
         
         <div class="flex-1 overflow-y-auto space-y-3 text-xs text-slate-600 dark:text-slate-300 pr-1 leading-relaxed">
-            <h4 class="font-bold text-sm text-slate-900 dark:text-white">1. Общие положения</h4>
-            <p>Настоящее Соглашение регулирует порядок использования веб-сервиса Cashcontrol. Нажимая кнопку регистрации или входа, пользователь выражает полное согласие с условиями защиты данных.</p>
-            
-            <h4 class="font-bold text-sm text-slate-900 dark:text-white">2. Хранение и обработка данных</h4>
-            <p>Все ваши финансовые записи, счета, долги и настройки хранятся в защищенной базе данных Supabase. Мы не передаем вашу личную финансовую информацию третьим лицам.</p>
-
-            <h4 class="font-bold text-sm text-slate-900 dark:text-white">3. Интеграция с Asyl AI</h4>
-            <p>При использовании функции Asyl AI обработка запросов происходит в обезличенном виде исключительно для предоставления финансовой аналитики.</p>
-
-            <h4 class="font-bold text-sm text-slate-900 dark:text-white">4. Изменения правил</h4>
-            <p>Мы оставляем за собой право обновлять данные условия. Актуальная версия всегда доступна в этом разделе.</p>
+            <h4 class="font-bold text-sm text-slate-900 dark:text-white">1. Назначение сервиса</h4>
+            <p>Cashcontrol — инструмент личного учета финансов. Пользователь самостоятельно отвечает за точность внесенных сумм и решений, принятых на основе отображаемой информации.</p>
+            <h4 class="font-bold text-sm text-slate-900 dark:text-white">2. Какие данные сохраняются</h4>
+            <p>При включенной облачной синхронизации в Supabase сохраняются данные профиля, счета, операции, цели, долги, график смен и настройки. Для входа используется email и пароль через Supabase Auth. Не вводите в приложение данные банковских карт, CVV или пароли от банков.</p>
+            <h4 class="font-bold text-sm text-slate-900 dark:text-white">3. Облачное хранение и доступ</h4>
+            <p>Облачное хранение предоставляется инфраструктурой Supabase. Доступ к строке данных ограничивается учетной записью пользователя с помощью Row Level Security (RLS). При использовании одного аккаунта данные синхронизируются между устройствами. Локальная копия может оставаться в браузере на вашем устройстве.</p>
+            <h4 class="font-bold text-sm text-slate-900 dark:text-white">4. Согласие пользователя</h4>
+            <p>Перед созданием аккаунта или включением облачной синхронизации пользователь должен подтвердить согласие на обработку и хранение перечисленных данных. Согласие фиксируется в метаданных аккаунта с датой и версией документа. Его можно отозвать, прекратив использование облачной синхронизации и запросив удаление аккаунта и облачных данных.</p>
+            <h4 class="font-bold text-sm text-slate-900 dark:text-white">5. Безопасность и ограничения</h4>
+            <p>Не передавайте пароль от аккаунта другим лицам. Разработчик принимает разумные технические меры, но не может гарантировать абсолютную безопасность передачи данных через интернет. Не используйте сервис как банковскую систему или источник профессиональной финансовой консультации.</p>
+            <h4 class="font-bold text-sm text-slate-900 dark:text-white">6. Обновления документа</h4>
+            <p>Условия могут обновляться. Актуальная версия и дата согласия доступны в разделе «Настройки → Правовая информация».</p>
         </div>
 
         <button onclick="closeModal('modalPrivacy')" class="w-full py-3 bg-brand-600 hover:bg-brand-700 text-white font-bold rounded-xl transition">
