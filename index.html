@@ -9,6 +9,8 @@
     <!-- Chart.js -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <!-- FontAwesome icons -->
+    <!-- Supabase JS Client -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
     <script>
@@ -842,6 +844,28 @@
     </div>
 
     <script>
+        // Данные вашего проекта Supabase (URL и public anon key из настроек API)
+const SUPABASE_URL = 'https://bieuynqtdtazocbspzdw.supabase.co';
+const SUPABASE_KEY = 'YOUR_SUPABASE_ANON_KEY';
+const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+// Пример загрузки счетов из облачной базы данных
+async function fetchAccountsFromSupabase() {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return;
+
+    const { data, error } = await supabase
+        .from('accounts')
+        .select('*')
+        .eq('user_id', user.id);
+
+    if (error) {
+        console.error('Ошибка загрузки счетов:', error);
+    } else {
+        APP_STATE.accounts = data;
+        renderAccounts();
+    }
+}
         // Global Application State (Supports Cashcontrol brand)
         const APP_STATE = {
             user: JSON.parse(localStorage.getItem('cashcontrol_user')) || { name: 'Пользователь', email: 'user@example.com', password: '' },
