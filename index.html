@@ -4,15 +4,15 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Cashcontrol — Управление личными финансами</title>
+    
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Supabase JS Client (только один раз!) -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <!-- FontAwesome icons -->
-    <!-- Supabase JS Client -->
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    
+    <!-- FontAwesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">   
     <script>
         tailwind.config = {
             darkMode: 'class',
@@ -844,18 +844,28 @@
     </div>
 
     <script>
-        // Безопасная инициализация Supabase с защитой от сбоя
-const SUPABASE_URL = 'https://supabase.com/dashboard/project/jjhqkayzxjjiesmslzgx';
-const SUPABASE_KEY = 'sb_publishable_tu59lIA5n1BwCw-YZny2eA_67wwq38z'; // sb_publishable_tu59...
+// 1. ИНИЦИАЛИЗАЦИЯ SUPABASE (CASHCONTROL)
+// ==========================================
+const SUPABASE_URL = 'https://jjhqkayzxjjiesmslzgx.supabase.co';
+const SUPABASE_KEY = 'sb_publishable_tu59lIA5n1BwCw-YZny2eA_67wwq38z'; // Вставьте весь ваш ключ из вкладки Publishable key
 
 let supabase = null;
 try {
     if (window.supabase && typeof window.supabase.createClient === 'function') {
         supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
     }
-} catch (err) {
-    console.warn('Supabase не подключен, работаем в локальном режиме:', err);
+} catch (e) {
+    console.warn('Supabase fallback:', e);
 }
+
+// ==========================================
+// 2. ДАЛЕЕ ИДЕТ ВАШ ОРИГИНАЛЬНЫЙ APP_STATE
+// ==========================================
+const APP_STATE = {
+    user: JSON.parse(localStorage.getItem('mubudget_user')) || { name: 'Пользователь', status: 'Активный' },
+    ...
+
+        
 // Пример загрузки счетов из облачной базы данных
 async function fetchAccountsFromSupabase() {
     const { data: { user } } = await supabase.auth.getUser();
