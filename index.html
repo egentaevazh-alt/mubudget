@@ -917,6 +917,8 @@ const SUPABASE_KEY = 'sb_publishable_tu59lIA5n1BwCw-YZny2eA_67wwq38z';
 let supabaseClient = null;
 let currentSupabaseUser = null;
 let cloudSyncBusy = false;
+let cloudSyncPending = false;
+let cloudSyncReady = false;
 try {
     if (window.supabase && typeof window.supabase.createClient === 'function') {
         supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY, {
@@ -981,7 +983,7 @@ try {
         function saveState() {
             saveLocalStateOnly();
             renderAllData();
-            if (currentSupabaseUser) syncStateToCloud();
+            if (currentSupabaseUser && cloudSyncReady) syncStateToCloud();
         }
         function saveLocalStateOnly() {
             localStorage.setItem('cashcontrol_user', JSON.stringify(APP_STATE.user));
@@ -1010,18 +1012,25 @@ try {
             return copy;
         }
         async function syncStateToCloud() {
-            if (!supabaseClient || !currentSupabaseUser || cloudSyncBusy) return;
+            if (!supabaseClient || !currentSupabaseUser || !cloudSyncReady) return;
+            cloudSyncPending = true;
+            if (cloudSyncBusy) return;
             cloudSyncBusy = true;
             try {
-                const { error } = await supabaseClient.from('user_data').upsert({
-                    user_id: currentSupabaseUser.id,
-                    data: cloudSnapshot(),
-                    updated_at: new Date().toISOString()
-                }, { onConflict: 'user_id' });
-                if (error) throw error;
-                setCloudStatus('Синхронизировано с Supabase');
+                while (cloudSyncPending && currentSupabaseUser) {
+                    cloudSyncPending = false;
+                    const userId = currentSupabaseUser.id;
+                    const snapshot = cloudSnapshot();
+                    setCloudStatus('Сохранение в Supabase…');
+                    const { error } = await supabaseClient.from('user_data').upsert({
+                        user_id: userId, data: snapshot, updated_at: new Date().toISOString()
+                    }, { onConflict: 'user_id' });
+                    if (error) throw error;
+                    setCloudStatus('Синхронизировано с Supabase');
+                }
             } catch (error) {
                 console.error('Cloud sync error:', error);
+                cloudSyncPending = true;
                 setCloudStatus('Ошибка синхронизации: ' + error.message, true);
             } finally { cloudSyncBusy = false; }
         }
@@ -1040,16 +1049,18 @@ try {
                     if (currentSupabaseUser.user_metadata?.full_name) APP_STATE.user.name = currentSupabaseUser.user_metadata.full_name;
                     APP_STATE.user.email = currentSupabaseUser.email || APP_STATE.user.email;
                     delete APP_STATE.user.password;
+                    cloudSyncReady = true;
                     saveLocalStateOnly();
                     setTheme(APP_STATE.theme);
                     initUserProfile();
                     renderAllData();
                     setCloudStatus('Данные загружены из Supabase');
                 } else {
+                    cloudSyncReady = true;
                     await syncStateToCloud();
-                    setCloudStatus('Облачная запись создана для вашего аккаунта');
                 }
             } catch (error) {
+                cloudSyncReady = false;
                 console.error('Cloud load error:', error);
                 setCloudStatus('Не удалось загрузить данные: ' + error.message, true);
             }
@@ -1076,9 +1087,17 @@ try {
                     }
                 } else setCloudStatus('Войдите или создайте аккаунт для облачной синхронизации');
                 supabaseClient.auth.onAuthStateChange((event, session) => {
+                    const previousId = currentSupabaseUser?.id;
                     currentSupabaseUser = session?.user || null;
+                    if (!currentSupabaseUser || (previousId && previousId !== currentSupabaseUser.id)) {
+                        cloudSyncReady = false;
+                        cloudSyncPending = false;
+                    }
                     updateCloudAuthUI();
                     if (event === 'SIGNED_OUT') setCloudStatus('Вы вышли. Локальные данные сохранены');
+                    if (event === 'SIGNED_IN' && currentSupabaseUser && !cloudSyncReady && currentSupabaseUser.user_metadata?.privacy_consent === true) {
+                        setTimeout(() => { if (currentSupabaseUser && !cloudSyncReady) loadStateFromCloud(); }, 0);
+                    }
                 });
             } catch (error) {
                 console.error('Supabase error:', error);
@@ -1143,6 +1162,7 @@ try {
                 currentSupabaseUser = data.user;
                 APP_STATE.user.name = name; APP_STATE.user.email = email;
                 saveLocalStateOnly(); updateCloudAuthUI(); initUserProfile();
+                cloudSyncReady = true;
                 await syncStateToCloud();
             }
         }
@@ -1159,6 +1179,7 @@ try {
             await loadStateFromCloud();
         }
         async function cloudSignOut() {
+            cloudSyncReady = false;
             const { error } = await supabaseClient.auth.signOut();
             if (error) setCloudStatus(error.message, true);
         }
