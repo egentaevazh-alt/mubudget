@@ -9,6 +9,8 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- Chart.js -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- PDF.js: текстовые PDF выписки; сканы требуют OCR -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
     <!-- Supabase JS Client (только один раз!) -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <!-- FontAwesome -->
@@ -279,6 +281,7 @@
                                 </div>
                                 <div>
                                     <label class="block text-xs font-semibold mb-1 text-slate-400">Начальный баланс (<span class="curr-symbol">₸</span>)</label>
+                                    <select id="accInlineCurrency" class="w-full bg-slate-100 dark:bg-slate-800 border-0 rounded-xl px-3 py-2.5 text-xs"><option value="KZT">₸ KZT</option><option value="USD">$ USD</option><option value="EUR">€ EUR</option><option value="RUB">₽ RUB</option></select>
                                     <input type="number" id="accInlineBalance" required placeholder="0" class="w-full bg-slate-100 dark:bg-slate-800 border-0 rounded-xl px-3 py-2.5 text-xs font-bold focus:ring-2 focus:ring-brand-500" />
                                 </div>
                                 <div class="flex items-center gap-3 pt-1">
@@ -311,6 +314,12 @@
                         </div>
                         <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-5 rounded-3xl shadow-sm">
                             <h3 class="font-bold mb-4 text-sm">Вся история операций (CRUD)</h3>
+                            <div class="mb-4 p-3 rounded-xl bg-slate-100 dark:bg-slate-800 space-y-2">
+                              <h4 class="font-bold text-sm">📄 Импорт выписки Kaspi / PDF</h4>
+                              <p class="text-xs text-slate-500">Поддерживаются PDF с выделяемым текстом. Проверьте каждую строку перед импортом. PDF не загружается на сервер.</p>
+                              <input id="statementPdf" type="file" accept="application/pdf,.pdf" class="w-full text-xs" onchange="parseStatementPdf(this.files[0])">
+                              <div id="statementPreview" class="text-xs space-y-2"></div>
+                            </div>
                             <div id="fullTransactionsList" class="space-y-2.5 max-h-96 overflow-y-auto pr-1"></div>
                         </div>
                     </div>
@@ -371,7 +380,7 @@
                                     <h3 class="font-bold text-sm flex items-center gap-2">
                                         <i class="fa-solid fa-coins text-brand-600"></i> Основная валюта
                                     </h3>
-                                    <p class="text-xs text-slate-400 mt-0.5">Символ валюты отображается во всем приложении</p>
+                                    <p class="text-xs text-slate-400 mt-0.5">Суммы пересчитываются по введённому курсу, не просто меняют символ</p>
                                 </div>
                                 <select id="settingCurrencySelect" onchange="changeCurrency(this.value)" class="bg-slate-100 dark:bg-slate-800 font-bold text-xs px-4 py-2.5 rounded-xl border-0 focus:ring-2 focus:ring-brand-500">
                                     <option value="KZT">₸ Тенге (KZT)</option>
@@ -380,6 +389,12 @@
                                     <option value="RUB">₽ Рубль (RUB)</option>
                                 </select>
                             </div>
+                            <div class="grid grid-cols-1 sm:grid-cols-3 gap-2 text-xs">
+                              <label>1 USD в ₸<input id="fxUSD" type="number" step="0.0001" min="0.0001" onchange="saveFxRates()" class="w-full p-2 rounded-xl bg-slate-100 dark:bg-slate-800"></label>
+                              <label>1 EUR в ₸<input id="fxEUR" type="number" step="0.0001" min="0.0001" onchange="saveFxRates()" class="w-full p-2 rounded-xl bg-slate-100 dark:bg-slate-800"></label>
+                              <label>1 RUB в ₸<input id="fxRUB" type="number" step="0.0001" min="0.0001" onchange="saveFxRates()" class="w-full p-2 rounded-xl bg-slate-100 dark:bg-slate-800"></label>
+                            </div>
+                            <p class="text-xs text-amber-600">Курсы задаются вручную. Это не биржевые котировки в реальном времени. Старые счета считаются в KZT.</p>
                         </div>
 
 
@@ -401,7 +416,14 @@
                             <p class="text-xs text-slate-400">В этой веб-версии уведомления проверяются, когда сайт открыт. Для уведомлений при закрытом сайте потребуется отдельная серверная настройка push.</p>
                             <div id="remindersList" class="space-y-2"></div>
                         </div>
-                       
+                        <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-5 rounded-3xl space-y-3">
+                            <h3 class="font-bold">✨ Asyl AI</h3>
+                            <p class="text-xs text-slate-400">Будущий финансовый помощник. Для настоящего ИИ потребуется защищённый сервер и API модели.</p>
+                            <button onclick="showAsylPreview()" class="w-full p-3 rounded-xl bg-slate-100 dark:bg-slate-800 text-sm font-bold">Посмотреть анализ расходов</button>
+                            <div id="asylResult" class="text-sm"></div>
+                            <div class="border-t border-slate-200 dark:border-slate-800 pt-3"><b>Подписка Asyl AI</b><p class="text-xs text-slate-400 mt-1">Оплата пока не подключена. Списаний не будет; оформление появится после подключения платёжного провайдера и серверной проверки подписки.</p></div>
+                        </div>
+
                         <!-- One account: profile + Supabase authentication -->
                         <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-5 rounded-3xl space-y-4 shadow-sm">
                             <h3 class="font-bold text-base flex items-center gap-2"><i class="fa-solid fa-user-gear text-brand-600"></i> Аккаунт и профиль</h3>
@@ -413,6 +435,7 @@
                             <div class="border-t border-slate-100 dark:border-slate-800 pt-4 space-y-3">
                                 <p class="text-xs text-slate-400">Один аккаунт для входа и синхронизации счетов, операций, целей, долгов и настроек между устройствами.</p>
                                 <p id="cloudAccountLabel" class="text-xs font-semibold text-slate-600 dark:text-slate-300">Проверка подключения...</p>
+                                <button type="button" onclick="downloadCashcontrolBackup()" class="w-full p-2 rounded-xl border border-slate-300 text-xs font-semibold">⬇ Скачать резервную копию JSON</button>
                                 <input type="email" id="cloudAuthEmail" autocomplete="email" placeholder="Email" class="w-full bg-slate-100 dark:bg-slate-800 border-0 rounded-xl px-4 py-3 text-xs">
                                 <input type="password" id="cloudAuthPassword" autocomplete="current-password" placeholder="Пароль (минимум 6 символов)" class="w-full bg-slate-100 dark:bg-slate-800 border-0 rounded-xl px-4 py-3 text-xs">
                                 <label id="cloudConsentWrap" class="flex items-start gap-2 text-[11px] text-slate-500 dark:text-slate-400 leading-relaxed">
@@ -461,58 +484,23 @@
     </div>
 </div>
 <!-- ИИ-Помощник Asyl AI -->
-<!-- Блок Asyl AI в Настройках -->
-<div class="bg-slate-800/60 p-5 rounded-3xl border border-slate-700/50 space-y-4">
+<div class="bg-gradient-to-br from-brand-900 to-rose-950 text-white p-6 rounded-3xl space-y-3 border border-rose-800/50 shadow-xl">
     <div class="flex items-center justify-between">
         <div class="flex items-center gap-3">
-            <div class="w-9 h-9 rounded-xl bg-rose-500/20 text-rose-400 flex items-center justify-center font-bold">
-                <i class="fa-solid fa-sparkles"></i>
+            <div class="w-10 h-10 rounded-2xl bg-rose-500/20 flex items-center justify-center text-rose-300 text-xl">
+                <i class="fa-solid fa-brain"></i>
             </div>
             <div>
-                <h3 class="font-bold text-sm text-white">✨ Asyl AI</h3>
-                <p class="text-[11px] text-slate-400">Умный финансовый помощник по вашей базе</p>
+                <h3 class="font-bold text-lg">Asyl AI</h3>
+                <p class="text-xs text-rose-200">Персональный финансовый помощник</p>
             </div>
         </div>
-        <button onclick="toggleAsylAIChat()" class="px-4 py-2 bg-rose-600 hover:bg-rose-700 text-white font-bold text-xs rounded-xl transition">
-            Посмотреть анализ расходов
-        </button>
+        <span class="px-2.5 py-1 rounded-full text-[10px] font-bold bg-rose-500/30 text-rose-200 border border-rose-400/30 uppercase tracking-wider">Скоро</span>
     </div>
-
-    <!-- Интерактивный чат (скрыт по умолчанию) -->
-    <div id="asylAiChatContainer" class="hidden pt-4 border-t border-slate-700/60 space-y-3">
-        <div id="asylAiMessages" class="max-h-60 overflow-y-auto space-y-2.5 pr-1 text-xs">
-            <div class="bg-slate-900/80 p-3 rounded-2xl border border-slate-700/50 text-slate-200">
-                🤖 <b>Asyl AI:</b> Привет! Нажмите «Анализ трат» или напишите вопрос по вашей базе данных.
-            </div>
-        </div>
-
-        <!-- Кнопки быстрого анализа -->
-        <div class="flex gap-2 overflow-x-auto pb-1 no-scrollbar">
-            <button type="button" onclick="askAsylAI('Анализ трат')" class="px-3 py-1.5 bg-slate-700 hover:bg-rose-600 text-white text-[11px] font-semibold rounded-full whitespace-nowrap transition">📊 Анализ трат</button>
-            <button type="button" onclick="askAsylAI('Как сэкономить?')" class="px-3 py-1.5 bg-slate-700 hover:bg-rose-600 text-white text-[11px] font-semibold rounded-full whitespace-nowrap transition">💡 Как сэкономить?</button>
-            <button type="button" onclick="askAsylAI('Мой баланс')" class="px-3 py-1.5 bg-slate-700 hover:bg-rose-600 text-white text-[11px] font-semibold rounded-full whitespace-nowrap transition">💰 Мой баланс</button>
-        </div>
-
-        <!-- Поле отправки -->
-        <form onsubmit="handleAsylAISubmit(event)" class="flex gap-2 pt-1">
-            <input type="text" id="asylAiInput" placeholder="Спросить Asyl AI..." required class="flex-1 bg-slate-900 text-white border border-slate-700 rounded-xl px-3.5 py-2 text-xs focus:ring-1 focus:ring-rose-500 focus:outline-none" />
-            <button type="submit" class="px-3.5 bg-rose-600 text-white rounded-xl text-xs font-bold hover:bg-rose-700 transition">
-                <i class="fa-solid fa-paper-plane"></i>
-            </button>
-        </form>
-    </div>
-</div>
-<div class="bg-gradient-to-r from-rose-900/80 to-slate-900 p-5 rounded-3xl border border-rose-800/40 flex items-center justify-between">
-    <div class="flex items-center gap-3">
-        <div class="w-10 h-10 rounded-2xl bg-rose-500/20 text-rose-300 flex items-center justify-center text-xl font-bold">
-            <i class="fa-solid fa-robot"></i>
-        </div>
-        <div>
-            <h4 class="font-bold text-sm text-white">Asyl AI активирован</h4>
-            <p class="text-xs text-rose-200">Локальный анализ ваших расходов и лимитов работает</p>
-        </div>
-    </div>
-    <span class="px-2.5 py-1 bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 text-[10px] font-bold rounded-full">АКТИВЕН</span>
+    
+    <p class="text-xs text-slate-300 leading-relaxed">
+        Умный финансовый консультант <strong>Asyl AI</strong> поможет анализировать доходы и расходы, автоматически составлять лимит трат и давать советы по экономии бюджета. Функция будет доступна после подключения API.
+    </p>
 </div>
                         <!-- Theme Toggle Card -->
                         <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-5 rounded-3xl flex items-center justify-between shadow-sm">
@@ -683,9 +671,10 @@
                 
                 <div>
                     <label class="block text-xs font-semibold mb-1 text-slate-400">Сумма (<span class="curr-symbol">₸</span>)</label>
-                    <input type="number" id="txAmount" required placeholder="0" class="w-full bg-slate-100 dark:bg-slate-800 border-0 rounded-xl p-3 text-lg font-bold focus:ring-2 focus:ring-brand-500" />
+                    <input type="number" id="txAmount" required min="0.01" step="0.01" placeholder="0" class="w-full bg-slate-100 dark:bg-slate-800 border-0 rounded-xl p-3 text-lg font-bold focus:ring-2 focus:ring-brand-500" />
                 </div>
 
+                <div><label class="block text-xs font-semibold mb-1 text-slate-400">Валюта операции</label><select id="txCurrency" class="w-full bg-slate-100 dark:bg-slate-800 rounded-xl p-3 text-sm"><option value="KZT">KZT — тенге</option><option value="USD">USD — доллар</option><option value="EUR">EUR — евро</option><option value="RUB">RUB — рубль</option></select><p class="text-xs text-slate-400 mt-1">Если валюта операции отличается от валюты счёта, используется курс из настроек.</p></div>
                 <div>
                     <label class="block text-xs font-semibold mb-1 text-slate-400">Дата операции</label>
                     <input type="date" id="txDate" required class="w-full bg-slate-100 dark:bg-slate-800 border-0 rounded-xl p-3 text-sm focus:ring-2 focus:ring-brand-500" />
@@ -970,6 +959,7 @@ try {
             recurring: JSON.parse(localStorage.getItem('cashcontrol_recurring') || '[]'),
             palette: localStorage.getItem('cashcontrol_palette') || 'graphite',
             remindersEnabled: localStorage.getItem('cashcontrol_reminders') === 'true',
+            fxRates: JSON.parse(localStorage.getItem('cashcontrol_fx') || '{"KZT":1,"USD":0,"EUR":0,"RUB":0}'),
             activeDebtTab: 'my_debts'
         };
 
@@ -1027,6 +1017,7 @@ try {
             localStorage.setItem('cashcontrol_recurring', JSON.stringify(APP_STATE.recurring));
             localStorage.setItem('cashcontrol_palette', APP_STATE.palette);
             localStorage.setItem('cashcontrol_reminders', String(APP_STATE.remindersEnabled));
+            localStorage.setItem('cashcontrol_fx', JSON.stringify(APP_STATE.fxRates));
         }
         function setCloudStatus(message, isError = false) {
             const el = document.getElementById('cloudSyncStatus');
@@ -1070,7 +1061,8 @@ try {
                 if (error) throw error;
                 if (data && data.data) {
                     const cloud = data.data;
-                    ['theme','currency','language','budgetLimit','accounts','transactions','goals','debts','shifts','recurring','palette','remindersEnabled'].forEach(k => {
+                    try {localStorage.setItem('cashcontrol_pre_cloud_backup_'+currentSupabaseUser.id, JSON.stringify(cloudSnapshot()));} catch(e){}
+                    ['theme','currency','language','budgetLimit','accounts','transactions','goals','debts','shifts','recurring','palette','remindersEnabled','fxRates'].forEach(k => {
                         if (Object.prototype.hasOwnProperty.call(cloud, k)) APP_STATE[k] = cloud[k];
                     });
                     if (cloud.user) APP_STATE.user = { ...APP_STATE.user, ...cloud.user };
@@ -1085,8 +1077,14 @@ try {
                     setCloudStatus('Данные загружены из Supabase');
                 } else {
                     cloudSyncReady = true;
+                    const previousOwner=localStorage.getItem('cashcontrol_local_owner');
+                    if(previousOwner && previousOwner!==currentSupabaseUser.id){
+                        APP_STATE.accounts=[];APP_STATE.transactions=[];APP_STATE.goals=[];APP_STATE.debts=[];APP_STATE.shifts=[];APP_STATE.recurring=[];
+                        saveLocalStateOnly();renderAllData();
+                    }
                     await syncStateToCloud();
                 }
+                localStorage.setItem('cashcontrol_local_owner',currentSupabaseUser.id);
             } catch (error) {
                 cloudSyncReady = false;
                 console.error('Cloud load error:', error);
@@ -1122,7 +1120,7 @@ try {
                         cloudSyncPending = false;
                     }
                     updateCloudAuthUI();
-                    if (event === 'SIGNED_OUT') setCloudStatus('Вы вышли. Локальные данные сохранены');
+                    if (event === 'SIGNED_OUT') {setCloudStatus('Вы вышли. Данные облака остаются в аккаунте.'); APP_STATE.accounts=[];APP_STATE.transactions=[];APP_STATE.goals=[];APP_STATE.debts=[];APP_STATE.shifts=[];APP_STATE.recurring=[];saveLocalStateOnly();renderAllData();}
                     if (event === 'SIGNED_IN' && currentSupabaseUser && !cloudSyncReady && currentSupabaseUser.user_metadata?.privacy_consent === true) {
                         setTimeout(() => { if (currentSupabaseUser && !cloudSyncReady) loadStateFromCloud(); }, 0);
                     }
@@ -1158,6 +1156,7 @@ try {
             const password = document.getElementById('cloudAuthPassword').value;
             if (!email || !password) return setCloudStatus('Введите email и пароль', true);
             if (!hasDataConsent()) return setCloudStatus('Для входа и облачной синхронизации подтвердите согласие с условиями', true);
+            if (!supabaseClient) return setCloudStatus('Библиотека Supabase не загружена', true);
             const { data, error } = await supabaseClient.auth.signInWithPassword({ email, password });
             if (error) return setCloudStatus(error.message, true);
             const { error: consentError } = await supabaseClient.auth.updateUser({ data: {
@@ -1178,6 +1177,7 @@ try {
             if (!email || !password) return setCloudStatus('Введите email и пароль', true);
             if (password.length < 6) return setCloudStatus('Пароль должен содержать минимум 6 символов', true);
             if (!hasDataConsent()) return setCloudStatus('Перед регистрацией необходимо принять условия и согласие на обработку данных', true);
+            if (!supabaseClient) return setCloudStatus('Библиотека Supabase не загружена', true);
             const { data, error } = await supabaseClient.auth.signUp({
                 email, password,
                 options: { emailRedirectTo: window.location.origin + window.location.pathname,
@@ -1268,11 +1268,22 @@ try {
             if (select) select.value = lang;
         }
 
+        function currencyOf(acc){return acc?.currency || 'KZT';}
+        function fxRate(code){const v=Number(APP_STATE.fxRates?.[code]);return code==='KZT'?1:(Number.isFinite(v)&&v>0?v:NaN);}
+        function convertAmount(value,from,to){const a=fxRate(from),b=fxRate(to);return Number(value)*a/b;}
+        function displayed(value,from){const result=convertAmount(value,from,APP_STATE.currency);return Number.isFinite(result)?result.toLocaleString(undefined,{maximumFractionDigits:2}):'—';}
+        function currencySign(code){return CURRENCY_SYMBOLS[code]||code;}
+        function saveFxRates(){
+          for(const code of ['USD','EUR','RUB']){const v=Number(document.getElementById('fx'+code).value);if(!Number.isFinite(v)||v<=0){alert('Введите положительный курс '+code);return;}APP_STATE.fxRates[code]=v;}
+          APP_STATE.fxRates.KZT=1;saveState();showToast('Курсы сохранены');
+        }
+        function renderFxRates(){for(const code of ['USD','EUR','RUB']){const el=document.getElementById('fx'+code);if(el&&document.activeElement!==el)el.value=APP_STATE.fxRates[code]||'';}}
         function changeCurrency(curr) {
+            if(!Number.isFinite(fxRate(curr))){alert('Сначала укажите курс '+curr+' в тенге в настройках');const sel=document.getElementById('settingCurrencySelect');if(sel)sel.value=APP_STATE.currency;return;}
             APP_STATE.currency = curr;
             updateCurrencyUI();
             saveState();
-            showToast(`Основная валюта изменена на ${curr}`);
+            showToast(`Отображение пересчитано в ${curr}`);
         }
 
         function updateCurrencyUI() {
@@ -1315,81 +1326,6 @@ try {
             if (tabId === 'analytics') renderAnalyticsChart();
         }
 
-        // Открытие/закрытие чата
-function toggleAsylAIChat() {
-    const container = document.getElementById('asylAiChatContainer');
-    if (!container) return;
-    container.classList.toggle('hidden');
-    if (!container.classList.contains('hidden')) {
-        askAsylAI('Анализ трат');
-    }
-}
-
-// Обработка ввода
-function handleAsylAISubmit(e) {
-    e.preventDefault();
-    const input = document.getElementById('asylAiInput');
-    const q = input.value.trim();
-    if (!q) return;
-    askAsylAI(q);
-    input.value = '';
-}
-
-// Построение логики ответа на основе APP_STATE / данных
-function askAsylAI(queryText) {
-    const chat = document.getElementById('asylAiMessages');
-    if (!chat) return;
-
-    // Сообщение пользователя
-    chat.innerHTML += `
-        <div class="text-right">
-            <span class="inline-block bg-rose-600 text-white p-2.5 rounded-2xl text-xs max-w-[85%]">${queryText}</span>
-        </div>
-    `;
-
-    // Расчет финансовой аналитики
-    const sym = CURRENCY_SYMBOLS[APP_STATE.currency] || '₸';
-    const totalBalance = (APP_STATE.accounts || []).reduce((sum, a) => sum + Number(a.balance || 0), 0);
-    
-    let totalExpense = 0;
-    const catMap = {};
-    (APP_STATE.transactions || []).forEach(t => {
-        if (t.type === 'expense') {
-            const amt = Number(t.amount || 0);
-            totalExpense += amt;
-            catMap[t.category] = (catMap[t.category] || 0) + amt;
-        }
-    });
-
-    let topCat = 'Нет';
-    let maxAmt = 0;
-    for (const [c, a] of Object.entries(catMap)) {
-        if (a > maxAmt) { maxAmt = a; topCat = c; }
-    }
-
-    let responseHtml = '';
-    const q = queryText.toLowerCase();
-
-    if (q.includes('анализ')) {
-        responseHtml = totalExpense > 0
-            ? `📊 <b>Анализ расходов Asyl AI:</b><br>• Всего потрачено: <b>${totalExpense.toLocaleString()} ${sym}</b><br>• Основная категория: <b>${topCat}</b> (${maxAmt.toLocaleString()} ${sym})<br>• Доступный баланс: <b>${totalBalance.toLocaleString()} ${sym}</b>`
-            : `Пока нет записанных расходов. Добавьте первую операцию, чтобы я сформировал отчет!`;
-    } else if (q.includes('сэкономить')) {
-        responseHtml = `💡 <b>Совет:</b> Попробуйте сократить расходы на «<b>${topCat}</b>» на 10-15%. Откладывайте сэкономленные средства на Депозит.`;
-    } else {
-        responseHtml = `💰 Ваш общий текущий баланс: <b>${totalBalance.toLocaleString()} ${sym}</b>. Всего транзакций: <b>${(APP_STATE.transactions || []).length}</b>.`;
-    }
-
-    // Ответ AI
-    setTimeout(() => {
-        chat.innerHTML += `
-            <div class="bg-slate-900/90 p-3 rounded-2xl border border-slate-700/60 text-slate-200">
-                🤖 <b>Asyl AI:</b> ${responseHtml}
-            </div>
-        `;
-        chat.scrollTop = chat.scrollHeight;
-    }, 300);
-}
         function openSubModule(subId) {
             document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
             const sub = document.getElementById(`subtab-${subId}`);
@@ -1409,6 +1345,7 @@ function askAsylAI(queryText) {
             renderShifts();
             renderRecurring();
             renderReminderList();
+            renderFxRates();
             updateCurrencyUI();
             applyTranslations();
         }
@@ -1419,7 +1356,7 @@ function askAsylAI(queryText) {
             let depositBalance = 0;
 
             APP_STATE.accounts.forEach(acc => {
-                const bal = Number(acc.balance);
+                const bal = convertAmount(acc.balance, currencyOf(acc), APP_STATE.currency);
                 totalBalance += bal;
                 if (acc.type === 'deposit') {
                     depositBalance += bal;
@@ -1428,8 +1365,8 @@ function askAsylAI(queryText) {
 
             const sym = CURRENCY_SYMBOLS[APP_STATE.currency] || '₸';
 
-            document.getElementById('statTotalBalance').innerHTML = `${totalBalance.toLocaleString()} <span class="curr-symbol">${sym}</span>`;
-            document.getElementById('statDepositBalance').innerHTML = `${depositBalance.toLocaleString()} <span class="curr-symbol">${sym}</span>`;
+            document.getElementById('statTotalBalance').innerHTML = `${totalBalance.toLocaleString(undefined,{maximumFractionDigits:2})} <span class="curr-symbol">${sym}</span>`;
+            document.getElementById('statDepositBalance').innerHTML = `${depositBalance.toLocaleString(undefined,{maximumFractionDigits:2})} <span class="curr-symbol">${sym}</span>`;
 
             const now = new Date();
             let monthIncome = 0;
@@ -1439,16 +1376,16 @@ function askAsylAI(queryText) {
             APP_STATE.transactions.forEach(t => {
                 const tDate = new Date(t.date);
                 if (tDate.getMonth() === now.getMonth() && tDate.getFullYear() === now.getFullYear()) {
-                    if (t.type === 'income') monthIncome += Number(t.amount);
-                    if (t.type === 'expense') monthExpense += Number(t.amount);
+                    if (t.type === 'income') monthIncome += convertAmount(t.amount,t.currency||'KZT',APP_STATE.currency);
+                    if (t.type === 'expense') monthExpense += convertAmount(t.amount,t.currency||'KZT',APP_STATE.currency);
                 }
                 if (tDate.toDateString() === now.toDateString() && t.type === 'expense') {
-                    todayExpense += Number(t.amount);
+                    todayExpense += convertAmount(t.amount,t.currency||'KZT',APP_STATE.currency);
                 }
             });
 
-            document.getElementById('statMonthlyIncome').innerHTML = `${monthIncome.toLocaleString()} <span class="curr-symbol">${sym}</span>`;
-            document.getElementById('statMonthlyExpense').innerHTML = `${monthExpense.toLocaleString()} <span class="curr-symbol">${sym}</span>`;
+            document.getElementById('statMonthlyIncome').innerHTML = `${monthIncome.toLocaleString(undefined,{maximumFractionDigits:2})} <span class="curr-symbol">${sym}</span>`;
+            document.getElementById('statMonthlyExpense').innerHTML = `${monthExpense.toLocaleString(undefined,{maximumFractionDigits:2})} <span class="curr-symbol">${sym}</span>`;
 
             document.getElementById('budgetPeriodSelect').value = APP_STATE.budgetLimit.period;
             document.getElementById('budgetLimitInput').value = APP_STATE.budgetLimit.amount || '';
@@ -1509,7 +1446,7 @@ function askAsylAI(queryText) {
                             <span class="text-[10px] text-slate-400 capitalize">${acc.type === 'deposit' ? 'Депозит' : (acc.type === 'card' ? 'Карта' : 'Наличные')}</span>
                         </div>
                     </div>
-                    <span class="text-xs font-extrabold">${Number(acc.balance).toLocaleString()} ${sym}</span>
+                    <span class="text-xs font-extrabold">${Number(acc.balance).toLocaleString()} ${currencySign(currencyOf(acc))}</span>
                 `;
                 overviewList.appendChild(item);
 
@@ -1524,7 +1461,7 @@ function askAsylAI(queryText) {
                     </div>
                     <div>
                         <h4 class="font-bold text-sm text-slate-800 dark:text-slate-200">${acc.name}</h4>
-                        <p class="text-2xl font-black text-slate-900 dark:text-white mt-1">${Number(acc.balance).toLocaleString()} ${sym}</p>
+                        <p class="text-2xl font-black text-slate-900 dark:text-white mt-1">${Number(acc.balance).toLocaleString()} ${currencySign(currencyOf(acc))}</p>
                     </div>
                 `;
                 grid.appendChild(card);
@@ -1538,7 +1475,7 @@ function askAsylAI(queryText) {
             const type = document.getElementById('accInlineType').value;
             const color = document.getElementById('accInlineColor').value;
 
-            APP_STATE.accounts.push({ id: Date.now().toString(), name, balance, type, color });
+            APP_STATE.accounts.push({ id: Date.now().toString(), name, balance, type, color, currency: document.getElementById('accInlineCurrency').value });
             saveState();
             e.target.reset();
             showToast('Счет создан');
@@ -1589,7 +1526,7 @@ function askAsylAI(queryText) {
                     </div>
                     <div class="flex items-center gap-2 shrink-0">
                         <span class="font-black text-xs ${isIncome ? 'text-emerald-600 dark:text-emerald-400' : 'text-slate-900 dark:text-white'}">
-                            ${isTransfer ? '↔' : (isIncome||isDebtReturn) ? '+' : '-'}${Number(t.amount).toLocaleString()} ${sym}
+                            ${isTransfer ? '↔' : (isIncome||isDebtReturn) ? '+' : '-'}${Number(t.amount).toLocaleString()} ${currencySign(t.currency || currencyOf(acc))}
                         </span>
                         <button ${(isTransfer||isDebtReturn)?'class="hidden"':''} onclick="editTransaction('${t.id}')" class="text-slate-400 hover:text-brand-500 text-xs p-1"><i class="fa-solid fa-pen"></i></button>
                         <button onclick="deleteTransaction('${t.id}')" class="text-slate-400 hover:text-rose-500 text-xs p-1"><i class="fa-solid fa-trash"></i></button>
@@ -1612,12 +1549,13 @@ function askAsylAI(queryText) {
             document.getElementById('txId').value = '';
             document.getElementById('txType').value = type;
             document.getElementById('txAmount').value = '';
+            document.getElementById('txCurrency').value = currencyOf(APP_STATE.accounts[0]);
             document.getElementById('txNote').value = '';
             document.getElementById('txDate').value = new Date().toISOString().split('T')[0];
             document.getElementById('txModalTitle').textContent = type === 'income' ? 'Добавить Доход' : 'Добавить Расход';
 
             const selectAcc = document.getElementById('txAccountSelect');
-            selectAcc.innerHTML = APP_STATE.accounts.map(a => `<option value="${a.id}">${a.name} (${a.balance.toLocaleString()} ${sym})</option>`).join('');
+            selectAcc.innerHTML = APP_STATE.accounts.map(a => `<option value="${a.id}">${a.name} (${a.balance.toLocaleString()} ${currencySign(currencyOf(a))})</option>`).join('');
 
             const expBox = document.getElementById('txCategoryExpenseBox');
             const incBox = document.getElementById('txCategoryIncomeBox');
@@ -1638,6 +1576,7 @@ function askAsylAI(queryText) {
             const txId = document.getElementById('txId').value;
             const type = document.getElementById('txType').value;
             const amount = Number(document.getElementById('txAmount').value);
+            const txCurrency = document.getElementById('txCurrency').value;
             const accountId = document.getElementById('txAccountSelect').value;
             const dateStr = document.getElementById('txDate').value;
             const note = document.getElementById('txNote').value;
@@ -1647,16 +1586,20 @@ function askAsylAI(queryText) {
                 : (document.getElementById('txCategoryIncomeInput').value.trim() || 'Доход');
 
             const acc = APP_STATE.accounts.find(a => a.id === accountId);
-            if (!acc) return;
+            if (!acc || !Number.isFinite(amount) || amount <= 0) return alert('Введите корректную сумму');
+            const accountAmount=convertAmount(amount,txCurrency,currencyOf(acc));
+            if(!Number.isFinite(accountAmount))return alert('Укажите корректные курсы в настройках');
 
             if (txId) {
                 const existingTx = APP_STATE.transactions.find(t => t.id === txId);
                 if (existingTx) {
                     const prevAcc = APP_STATE.accounts.find(a => a.id === existingTx.accountId);
                     if (prevAcc) {
-                        if (existingTx.type === 'expense') prevAcc.balance += Number(existingTx.amount);
-                        else prevAcc.balance -= Number(existingTx.amount);
+                        if (existingTx.type === 'expense') prevAcc.balance += Number(existingTx.accountAmount??existingTx.amount);
+                        else prevAcc.balance -= Number(existingTx.accountAmount??existingTx.amount);
                     }
+                    existingTx.currency = txCurrency;
+                    existingTx.accountAmount = accountAmount;
                     existingTx.type = type;
                     existingTx.amount = amount;
                     existingTx.accountId = accountId;
@@ -1669,6 +1612,8 @@ function askAsylAI(queryText) {
                     id: Date.now().toString(),
                     type,
                     amount,
+                    currency: txCurrency,
+                    accountAmount,
                     accountId,
                     category,
                     note,
@@ -1676,8 +1621,8 @@ function askAsylAI(queryText) {
                 });
             }
 
-            if (type === 'expense') acc.balance -= amount;
-            else acc.balance += amount;
+            if (type === 'expense') acc.balance -= accountAmount;
+            else acc.balance += accountAmount;
 
             saveState();
             closeModal('modalTransaction');
@@ -1693,6 +1638,7 @@ function askAsylAI(queryText) {
             document.getElementById('txId').value = t.id;
             document.getElementById('txAmount').value = t.amount;
             document.getElementById('txAccountSelect').value = t.accountId;
+            document.getElementById('txCurrency').value = t.currency || 'KZT';
             document.getElementById('txDate').value = new Date(t.date).toISOString().split('T')[0];
             document.getElementById('txNote').value = t.note || '';
 
@@ -1710,8 +1656,8 @@ function askAsylAI(queryText) {
             if (confirm('Удалить эту операцию?')) {
                 const acc = APP_STATE.accounts.find(a => a.id === t.accountId);
                 if (acc) {
-                    if(t.type==='debt_return'){acc.balance-=Number(t.amount);const d=APP_STATE.debts.find(d=>d.type==='owed_to_me'&&d.paid&&d.bank===t.note&&Number(d.amount)===Number(t.amount));if(d)d.paid=false;}else if(t.type==='transfer'){acc.balance+=Number(t.amount);const dest=APP_STATE.accounts.find(a=>a.id===t.toAccountId);if(dest)dest.balance-=Number(t.amount);}else if (t.type === 'expense') acc.balance += Number(t.amount);
-                    else acc.balance -= Number(t.amount);
+                    if(t.type==='debt_return'){acc.balance-=Number(t.amount);const d=APP_STATE.debts.find(d=>d.type==='owed_to_me'&&d.paid&&d.bank===t.note&&Number(d.amount)===Number(t.amount));if(d)d.paid=false;}else if(t.type==='transfer'){acc.balance+=Number(t.amount);const dest=APP_STATE.accounts.find(a=>a.id===t.toAccountId);if(dest)dest.balance-=Number(t.creditedAmount??t.amount);}else if (t.type === 'expense') acc.balance += Number(t.accountAmount??t.amount);
+                    else acc.balance -= Number(t.accountAmount??t.amount);
                 }
                 APP_STATE.transactions = APP_STATE.transactions.filter(tx => tx.id !== id);
                 saveState();
@@ -2093,7 +2039,7 @@ function askAsylAI(queryText) {
             
             const totals = {};
             APP_STATE.transactions.filter(t => t.type === 'expense').forEach(t => {
-                totals[t.category] = (totals[t.category] || 0) + Number(t.amount);
+                totals[t.category] = (totals[t.category] || 0) + convertAmount(t.amount,t.currency||'KZT',APP_STATE.currency);
             });
 
             const labels = Object.keys(totals);
@@ -2163,8 +2109,8 @@ function askAsylAI(queryText) {
         function esc(v){return String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
         function chooseCategory(kind,val){const el=document.getElementById('txCategory'+kind+'Input');if(el)el.value=val==='Другое'?'':val;}
         function initCategories(){for(const kind of ['Expense','Income']){const el=document.getElementById('txCategory'+kind+'Preset');if(el)el.innerHTML='<option value="">Выберите категорию</option>'+(kind==='Expense'?EXPENSE_CATS:INCOME_CATS).map(c=>'<option>'+esc(c)+'</option>').join('');}}
-        function openTransferModal(){if(APP_STATE.accounts.length<2)return showToast('Создайте минимум два счета');const options=APP_STATE.accounts.map(a=>`<option value="${esc(a.id)}">${esc(a.name)}</option>`).join('');document.getElementById('transferFrom').innerHTML=options;document.getElementById('transferTo').innerHTML=options;document.getElementById('transferTo').selectedIndex=1;document.getElementById('transferAmount').value='';document.getElementById('modalTransfer').classList.remove('hidden');}
-        function submitTransfer(e){e.preventDefault();const from=APP_STATE.accounts.find(a=>a.id===document.getElementById('transferFrom').value),to=APP_STATE.accounts.find(a=>a.id===document.getElementById('transferTo').value),amount=Number(document.getElementById('transferAmount').value);if(!from||!to||from===to||!Number.isFinite(amount)||amount<=0)return alert('Проверьте счета и сумму');if(Number(from.balance)<amount)return alert('Недостаточно средств');from.balance=Number(from.balance)-amount;to.balance=Number(to.balance)+amount;APP_STATE.transactions.push({id:crypto.randomUUID(),type:'transfer',amount,accountId:from.id,toAccountId:to.id,category:'Перевод',note:from.name+' → '+to.name,date:new Date().toISOString()});saveState();closeModal('modalTransfer');showToast('Перевод выполнен');}
+        function openTransferModal(){if(APP_STATE.accounts.length<2)return showToast('Создайте минимум два счета');const options=APP_STATE.accounts.map(a=>`<option value="${esc(a.id)}">${esc(a.name)} (${currencyOf(a)})</option>`).join('');document.getElementById('transferFrom').innerHTML=options;document.getElementById('transferTo').innerHTML=options;document.getElementById('transferTo').selectedIndex=1;document.getElementById('transferAmount').value='';document.getElementById('modalTransfer').classList.remove('hidden');}
+        function submitTransfer(e){e.preventDefault();const from=APP_STATE.accounts.find(a=>a.id===document.getElementById('transferFrom').value),to=APP_STATE.accounts.find(a=>a.id===document.getElementById('transferTo').value),amount=Number(document.getElementById('transferAmount').value);if(!from||!to||from===to||!Number.isFinite(amount)||amount<=0)return alert('Проверьте счета и сумму');if(Number(from.balance)<amount)return alert('Недостаточно средств');const credited=convertAmount(amount,currencyOf(from),currencyOf(to));if(!Number.isFinite(credited))return alert('Укажите курсы валют в настройках');if(currencyOf(from)!==currencyOf(to)&&!confirm(`${amount} ${currencyOf(from)} → ${credited.toFixed(2)} ${currencyOf(to)} по заданному курсу. Продолжить?`))return;from.balance=Number(from.balance)-amount;to.balance=Number(to.balance)+credited;APP_STATE.transactions.push({id:crypto.randomUUID(),type:'transfer',amount,creditedAmount:credited,currency:currencyOf(from),toCurrency:currencyOf(to),accountId:from.id,toAccountId:to.id,category:'Перевод',note:from.name+' → '+to.name,date:new Date().toISOString()});saveState();closeModal('modalTransfer');showToast('Перевод выполнен');}
         function setPalette(v){APP_STATE.palette=v;applyPalette();saveState();}
         function applyPalette(){const colors={graphite:['#475569','#334155'],blue:['#2563eb','#1d4ed8'],red:['#e11d48','#be123c'],emerald:['#059669','#047857'],purple:['#7c3aed','#6d28d9']};const [a,b]=colors[APP_STATE.palette]||colors.graphite;document.documentElement.style.setProperty('--cc-primary',a);document.documentElement.style.setProperty('--cc-hover',b);const el=document.getElementById('paletteSelect');if(el)el.value=APP_STATE.palette;}
         function openRecurringModal(){document.getElementById('modalRecurring').classList.remove('hidden');}
@@ -2178,6 +2124,61 @@ function askAsylAI(queryText) {
         function reminderDue(r){const now=new Date(),target=new Date(now.getFullYear(),now.getMonth(),Math.min(r.day,new Date(now.getFullYear(),now.getMonth()+1,0).getDate()),...(r.time||'10:00').split(':').map(Number));target.setDate(target.getDate()-Number(r.before||0));return now>=target&&!r.paidMonths?.includes(monthKey());}
         function renderReminderList(){const el=document.getElementById('remindersList');if(!el)return;const toggle=document.getElementById('remindersEnabled');if(toggle)toggle.checked=APP_STATE.remindersEnabled;const due=APP_STATE.recurring.filter(r=>r.notify&&reminderDue(r));const debts=APP_STATE.debts.filter(d=>d.type==='my_debts'&&d.notif&&!d.paid).map(d=>({name:'Кредит: '+d.bank,amount:d.amount}));el.innerHTML=(due.length||debts.length)?due.concat(debts).map(r=>`<p class="text-xs p-2 rounded-lg bg-amber-50 dark:bg-amber-950/30">🔔 ${esc(r.name)} — ${Number(r.amount).toLocaleString()} ${CURRENCY_SYMBOLS[APP_STATE.currency]}</p>`).join(''):'<p class="text-xs text-slate-400">Нет активных напоминаний на сегодня</p>';}
         function checkReminders(){if(!APP_STATE.remindersEnabled)return;const key=monthKey();for(const r of APP_STATE.recurring){if(!r.notify||!reminderDue(r))continue;const seenKey='cashcontrol_notified_'+key+'_'+r.id;if(localStorage.getItem(seenKey))continue;localStorage.setItem(seenKey,'1');if('Notification'in window&&Notification.permission==='granted')new Notification('Cashcontrol: '+r.name,{body:'Платёж '+Number(r.amount).toLocaleString()+' '+CURRENCY_SYMBOLS[APP_STATE.currency]});else showToast('Напоминание: '+r.name);}}
+
+        // Offline backup: a backup is vital while auth and cloud configuration are being tested.
+        function downloadCashcontrolBackup(){
+          const data=JSON.stringify({exportedAt:new Date().toISOString(),app:'Cashcontrol',state:cloudSnapshot()},null,2);
+          const a=document.createElement('a'),url=URL.createObjectURL(new Blob([data],{type:'application/json'}));
+          a.href=url;a.download='cashcontrol-backup-'+new Date().toISOString().slice(0,10)+'.json';a.click();
+          setTimeout(()=>URL.revokeObjectURL(url),1000);
+        }
+        let pendingStatementRows=[];
+        async function parseStatementPdf(file){
+          const box=document.getElementById('statementPreview');pendingStatementRows=[];
+          if(!file)return;
+          if(file.size>12*1024*1024){box.textContent='Файл слишком большой (максимум 12 МБ)';return;}
+          if(!window.pdfjsLib){box.textContent='PDF.js не загрузился. Проверьте интернет.';return;}
+          box.textContent='Читаем текст PDF локально…';
+          try{
+            pdfjsLib.GlobalWorkerOptions.workerSrc='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+            const doc=await pdfjsLib.getDocument({data:await file.arrayBuffer()}).promise;
+            const lines=[];
+            for(let i=1;i<=Math.min(doc.numPages,35);i++){
+              const page=await doc.getPage(i),items=(await page.getTextContent()).items;
+              const rows=new Map();
+              for(const item of items){const y=Math.round(item.transform[5]/4)*4;const x=item.transform[4];if(!rows.has(y))rows.set(y,[]);rows.get(y).push({x,text:item.str});}
+              for(const [y,parts] of [...rows.entries()].sort((a,b)=>b[0]-a[0])) lines.push(parts.sort((a,b)=>a.x-b.x).map(p=>p.text).join(' ').trim());
+            }
+            const amounts=/([+−-])\s*([\d\s\u00a0]+(?:[,.]\d{1,2})?)\s*(₸|KZT|тенге|тг)/gi;
+            for(const line of lines){
+              if(!line||/итого|остаток|баланс|всего|доступно/i.test(line))continue;
+              let m;
+              while((m=amounts.exec(line))!==null){
+                const val=Number(m[2].replace(/[\s\u00a0]/g,'').replace(',','.'));
+                if(!Number.isFinite(val)||val<=0)continue;
+                const dm=line.match(/(\d{2})[.\/-](\d{2})[.\/-](\d{4})/);
+                const date=dm?`${dm[3]}-${dm[2]}-${dm[1]}`:new Date().toISOString().slice(0,10);
+                pendingStatementRows.push({id:crypto.randomUUID(),type:m[1]==='+'?'income':'expense',amount:val,date,note:line.slice(0,160)});
+              }
+            }
+            if(!pendingStatementRows.length){box.textContent='Не удалось надёжно распознать операции. Возможно, PDF — скан или другой формат. Ничего не импортировано.';return;}
+            const opts=APP_STATE.accounts.filter(a=>currencyOf(a)==='KZT').map(a=>`<option value="${esc(a.id)}">${esc(a.name)} (KZT)</option>`).join('');
+            box.innerHTML=`<p class="text-amber-600">Найдено ${pendingStatementRows.length} кандидатов. Проверьте суммы, знаки и даты: автоматическое распознавание может ошибаться. Строки без даты используют сегодняшнюю дату.</p><label>Счёт для операций<select id="statementAccount" class="w-full p-2 rounded-lg bg-white dark:bg-slate-900">${opts}</select></label><div id="statementRows" class="max-h-64 overflow-y-auto space-y-1"></div><button type="button" onclick="importStatementSelected()" class="p-2 rounded-xl bg-emerald-600 text-white">Импортировать отмеченные</button>`;
+            document.getElementById('statementRows').innerHTML=pendingStatementRows.map((r,i)=>`<label class="block p-2 border rounded-lg"><input type="checkbox" class="statementCheck" data-i="${i}"> ${r.type==='expense'?'−':'+'}${r.amount.toLocaleString()} ₸ · ${esc(r.date)} · ${esc(r.note.slice(0,95))}</label>`).join('');
+            if(!opts)box.innerHTML='<p>Сначала создайте счёт в KZT для импорта.</p>';
+          }catch(e){console.error(e);box.textContent='Ошибка чтения PDF: '+e.message;}
+        }
+        function importStatementSelected(){
+          if(!currentSupabaseUser||!cloudSyncReady)return alert('Сначала войдите в подтверждённый облачный аккаунт, чтобы импорт сохранялся в базе.');
+          const id=document.getElementById('statementAccount')?.value,acc=APP_STATE.accounts.find(a=>a.id===id);
+          if(!acc||currencyOf(acc)!=='KZT')return alert('Выберите счёт KZT');
+          const indexes=[...document.querySelectorAll('.statementCheck:checked')].map(x=>Number(x.dataset.i));
+          if(!indexes.length)return alert('Отметьте операции для импорта');
+          if(!confirm(`Импортировать ${indexes.length} операций? Баланс счёта изменится. Проверьте, что эти операции не добавлены ранее.`))return;
+          for(const i of indexes){const r=pendingStatementRows[i];if(!r)continue;APP_STATE.transactions.push({id:r.id,accountId:id,type:r.type,amount:r.amount,currency:'KZT',category:'Импорт выписки',note:r.note,date:new Date(r.date+'T12:00:00').toISOString(),source:'pdf-import'});acc.balance+=r.type==='income'?r.amount:-r.amount;}
+          pendingStatementRows=[];document.getElementById('statementPreview').textContent='Импортировано '+indexes.length+' операций. Проверьте синхронизацию Supabase.';saveState();
+        }
+
         function showAsylPreview(){const expenses=APP_STATE.transactions.filter(t=>t.type==='expense');const sum=expenses.reduce((a,t)=>a+Number(t.amount),0);const groups={};for(const t of expenses)groups[t.category]=(groups[t.category]||0)+Number(t.amount);const top=Object.entries(groups).sort((a,b)=>b[1]-a[1])[0];document.getElementById('asylResult').textContent=`Локальная статистика (не ИИ): расходов ${sum.toLocaleString()} ${CURRENCY_SYMBOLS[APP_STATE.currency]}. ${top?'Больше всего: '+top[0]+' — '+top[1].toLocaleString(): 'Добавьте расходы для анализа.'}`;}
         document.addEventListener('DOMContentLoaded',()=>{initCategories();applyPalette();renderRecurring();renderReminderList();checkReminders();setInterval(()=>{checkReminders();renderReminderList();},60000);});
 
