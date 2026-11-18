@@ -7,6 +7,8 @@
     
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
+    <!-- PDF.js: текстовые PDF выписки; сканы не поддерживаются -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
     <!-- Chart.js -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <!-- Supabase JS Client (только один раз!) -->
@@ -279,6 +281,7 @@
                                 </div>
                                 <div>
                                     <label class="block text-xs font-semibold mb-1 text-slate-400">Начальный баланс (<span class="curr-symbol">₸</span>)</label>
+                                    <select id="accInlineCurrency" aria-label="Валюта счёта" class="w-full bg-slate-100 dark:bg-slate-800 rounded-xl p-2 text-sm mb-2"><option value="KZT">₸ KZT</option><option value="USD">$ USD</option><option value="EUR">€ EUR</option><option value="RUB">₽ RUB</option></select>
                                     <input type="number" id="accInlineBalance" required placeholder="0" class="w-full bg-slate-100 dark:bg-slate-800 border-0 rounded-xl px-3 py-2.5 text-xs font-bold focus:ring-2 focus:ring-brand-500" />
                                 </div>
                                 <div class="flex items-center gap-3 pt-1">
@@ -313,6 +316,12 @@
                             <h3 class="font-bold mb-4 text-sm">Вся история операций (CRUD)</h3>
                             <div id="fullTransactionsList" class="space-y-2.5 max-h-96 overflow-y-auto pr-1"></div>
                         </div>
+                    </div>
+                    <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-5 rounded-3xl mt-4 space-y-3">
+                       <h3 class="font-bold text-sm">📄 Импорт банковской PDF-выписки (экспериментально)</h3>
+                       <p class="text-xs text-slate-500">Выберите текстовый PDF с операциями в ₸. Проверьте каждую строку и отсутствие дубликатов. PDF обрабатывается на устройстве, файл не отправляется на сервер.</p>
+                       <input id="statementPdf" type="file" accept="application/pdf,.pdf" onchange="parseStatementPdf(this.files[0])" class="text-xs w-full">
+                       <div id="statementPreview" class="text-xs space-y-2"></div>
                     </div>
                 </section>
 
@@ -402,6 +411,17 @@
                             <div id="remindersList" class="space-y-2"></div>
                         </div>
                        
+                        <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-5 space-y-3">
+                            <h3 class="font-bold text-sm">Курсы валют</h3>
+                            <p class="text-xs text-amber-600">Введите количество ₸ за 1 единицу валюты. Курсы задаются вручную и не обновляются автоматически.</p>
+                            <div class="grid grid-cols-3 gap-2 text-xs">
+                              <label>1 USD = ₸<input id="fxUSD" type="number" min="0.001" step="any" class="w-full rounded-lg p-2 bg-slate-100 dark:bg-slate-800"></label>
+                              <label>1 EUR = ₸<input id="fxEUR" type="number" min="0.001" step="any" class="w-full rounded-lg p-2 bg-slate-100 dark:bg-slate-800"></label>
+                              <label>1 RUB = ₸<input id="fxRUB" type="number" min="0.001" step="any" class="w-full rounded-lg p-2 bg-slate-100 dark:bg-slate-800"></label>
+                            </div>
+                            <button onclick="saveFxRates()" class="w-full p-3 bg-brand-600 text-white rounded-xl text-sm">Сохранить курсы</button>
+                            <button onclick="downloadCashcontrolBackup()" class="w-full p-3 bg-slate-100 dark:bg-slate-800 rounded-xl text-sm">Скачать резервную копию JSON</button>
+                        </div>
                         <!-- One account: profile + Supabase authentication -->
                         <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-5 rounded-3xl space-y-4 shadow-sm">
                             <h3 class="font-bold text-base flex items-center gap-2"><i class="fa-solid fa-user-gear text-brand-600"></i> Аккаунт и профиль</h3>
@@ -683,6 +703,7 @@
                 
                 <div>
                     <label class="block text-xs font-semibold mb-1 text-slate-400">Сумма (<span class="curr-symbol">₸</span>)</label>
+                    <select id="txCurrency" aria-label="Валюта операции" class="w-full mt-2 bg-slate-100 dark:bg-slate-800 p-3 rounded-xl text-sm"><option value="KZT">₸ KZT</option><option value="USD">$ USD</option><option value="EUR">€ EUR</option><option value="RUB">₽ RUB</option></select>
                     <input type="number" id="txAmount" required placeholder="0" class="w-full bg-slate-100 dark:bg-slate-800 border-0 rounded-xl p-3 text-lg font-bold focus:ring-2 focus:ring-brand-500" />
                 </div>
 
@@ -693,7 +714,7 @@
 
                 <div>
                     <label class="block text-xs font-semibold mb-1 text-slate-400">Счет</label>
-                    <select id="txAccountSelect" required class="w-full bg-slate-100 dark:bg-slate-800 border-0 rounded-xl p-3 text-sm focus:ring-2 focus:ring-brand-500"></select>
+                    <select id="txAccountSelect" onchange="const a=APP_STATE.accounts.find(x=>x.id===this.value);if(a)document.getElementById('txCurrency').value=currencyOf(a)" required class="w-full bg-slate-100 dark:bg-slate-800 border-0 rounded-xl p-3 text-sm focus:ring-2 focus:ring-brand-500"></select>
                 </div>
 
                 <!-- Expense Category -->
@@ -970,6 +991,7 @@ try {
             recurring: JSON.parse(localStorage.getItem('cashcontrol_recurring') || '[]'),
             palette: localStorage.getItem('cashcontrol_palette') || 'graphite',
             remindersEnabled: localStorage.getItem('cashcontrol_reminders') === 'true',
+            fxRates: JSON.parse(localStorage.getItem('cashcontrol_fx') || '{"KZT":1,"USD":0,"EUR":0,"RUB":0}'),
             activeDebtTab: 'my_debts'
         };
 
@@ -1006,6 +1028,8 @@ try {
                 if (box) box.classList.toggle('hidden', this.value !== 'auto');
             });
             await initializeCloudSync();
+            window.addEventListener('online',()=>{if(cloudSyncReady&&cloudSyncPending)syncStateToCloud();});
+            document.addEventListener('visibilitychange',()=>{if(!document.hidden&&cloudSyncReady&&cloudSyncPending)syncStateToCloud();});
         });
 
         function saveState() {
@@ -1027,6 +1051,7 @@ try {
             localStorage.setItem('cashcontrol_recurring', JSON.stringify(APP_STATE.recurring));
             localStorage.setItem('cashcontrol_palette', APP_STATE.palette);
             localStorage.setItem('cashcontrol_reminders', String(APP_STATE.remindersEnabled));
+            localStorage.setItem('cashcontrol_fx', JSON.stringify(APP_STATE.fxRates));
         }
         function setCloudStatus(message, isError = false) {
             const el = document.getElementById('cloudSyncStatus');
@@ -1070,7 +1095,8 @@ try {
                 if (error) throw error;
                 if (data && data.data) {
                     const cloud = data.data;
-                    ['theme','currency','language','budgetLimit','accounts','transactions','goals','debts','shifts','recurring','palette','remindersEnabled'].forEach(k => {
+                    try { localStorage.setItem('cashcontrol_backup_before_cloud_'+currentSupabaseUser.id,JSON.stringify(cloudSnapshot())); } catch(_) {}
+                    ['theme','currency','language','budgetLimit','accounts','transactions','goals','debts','shifts','recurring','palette','remindersEnabled','fxRates'].forEach(k => {
                         if (Object.prototype.hasOwnProperty.call(cloud, k)) APP_STATE[k] = cloud[k];
                     });
                     if (cloud.user) APP_STATE.user = { ...APP_STATE.user, ...cloud.user };
@@ -1085,8 +1111,15 @@ try {
                     setCloudStatus('Данные загружены из Supabase');
                 } else {
                     cloudSyncReady = true;
+                    const prevOwner=localStorage.getItem('cashcontrol_local_owner');
+                    if(prevOwner && prevOwner!==currentSupabaseUser.id){
+                      try{localStorage.setItem('cashcontrol_backup_previous_'+prevOwner,JSON.stringify(cloudSnapshot()));}catch(_){}
+                      APP_STATE.accounts=[];APP_STATE.transactions=[];APP_STATE.goals=[];APP_STATE.debts=[];APP_STATE.shifts=[];APP_STATE.recurring=[];
+                      saveLocalStateOnly();renderAllData();
+                    }
                     await syncStateToCloud();
                 }
+                localStorage.setItem('cashcontrol_local_owner',currentSupabaseUser.id);
             } catch (error) {
                 cloudSyncReady = false;
                 console.error('Cloud load error:', error);
@@ -1268,7 +1301,25 @@ try {
             if (select) select.value = lang;
         }
 
+        function currencyOf(acc){return acc?.currency || 'KZT';}
+        function rateFor(code){if(code==='KZT')return 1;const r=Number(APP_STATE.fxRates?.[code]);return Number.isFinite(r)&&r>0?r:NaN;}
+        function convertAmount(amount,from,to){const a=rateFor(from),b=rateFor(to);return Number(amount)*a/b;}
+        function nativeSymbol(code){return CURRENCY_SYMBOLS[code]||code;}
+        function displayAmount(amount,from,to=APP_STATE.currency){const result=convertAmount(amount,from,to);return Number.isFinite(result)?result.toLocaleString(undefined,{maximumFractionDigits:2}):'Курс не задан';}
+        function saveFxRates(){
+          const rates={KZT:1};
+          for(const c of ['USD','EUR','RUB']){const v=Number(document.getElementById('fx'+c).value);if(!Number.isFinite(v)||v<=0)return alert('Введите корректный курс '+c);rates[c]=v;}
+          APP_STATE.fxRates=rates;saveState();showToast('Курсы сохранены');
+        }
+        function renderFxRates(){for(const c of ['USD','EUR','RUB']){const el=document.getElementById('fx'+c);if(el&&document.activeElement!==el)el.value=APP_STATE.fxRates?.[c]||'';}}
+        function downloadCashcontrolBackup(){
+          const b=new Blob([JSON.stringify(cloudSnapshot(),null,2)],{type:'application/json'});
+          const u=URL.createObjectURL(b),a=document.createElement('a');
+          a.href=u;a.download='cashcontrol-backup-'+new Date().toISOString().slice(0,10)+'.json';a.click();
+          setTimeout(()=>URL.revokeObjectURL(u),1500);
+        }
         function changeCurrency(curr) {
+            if(!Number.isFinite(rateFor(curr))){alert('Сначала укажите курс '+curr+' в тенге');document.getElementById('settingCurrencySelect').value=APP_STATE.currency;return;}
             APP_STATE.currency = curr;
             updateCurrencyUI();
             saveState();
@@ -1410,6 +1461,8 @@ function askAsylAI(queryText) {
             renderRecurring();
             renderReminderList();
             updateCurrencyUI();
+            renderFxRates();
+            renderFxRates();
             applyTranslations();
         }
 
@@ -1419,7 +1472,7 @@ function askAsylAI(queryText) {
             let depositBalance = 0;
 
             APP_STATE.accounts.forEach(acc => {
-                const bal = Number(acc.balance);
+                const bal = convertAmount(acc.balance,currencyOf(acc),APP_STATE.currency);
                 totalBalance += bal;
                 if (acc.type === 'deposit') {
                     depositBalance += bal;
@@ -1439,11 +1492,11 @@ function askAsylAI(queryText) {
             APP_STATE.transactions.forEach(t => {
                 const tDate = new Date(t.date);
                 if (tDate.getMonth() === now.getMonth() && tDate.getFullYear() === now.getFullYear()) {
-                    if (t.type === 'income') monthIncome += Number(t.amount);
-                    if (t.type === 'expense') monthExpense += Number(t.amount);
+                    if (t.type === 'income') monthIncome += convertAmount(t.amount,t.currency||'KZT',APP_STATE.currency);
+                    if (t.type === 'expense') monthExpense += convertAmount(t.amount,t.currency||'KZT',APP_STATE.currency);
                 }
                 if (tDate.toDateString() === now.toDateString() && t.type === 'expense') {
-                    todayExpense += Number(t.amount);
+                    todayExpense += convertAmount(t.amount,t.currency||'KZT',APP_STATE.currency);
                 }
             });
 
@@ -1509,7 +1562,7 @@ function askAsylAI(queryText) {
                             <span class="text-[10px] text-slate-400 capitalize">${acc.type === 'deposit' ? 'Депозит' : (acc.type === 'card' ? 'Карта' : 'Наличные')}</span>
                         </div>
                     </div>
-                    <span class="text-xs font-extrabold">${Number(acc.balance).toLocaleString()} ${sym}</span>
+                    <span class="text-xs font-extrabold">${Number(acc.balance).toLocaleString()} ${nativeSymbol(currencyOf(acc))}</span>
                 `;
                 overviewList.appendChild(item);
 
@@ -1524,7 +1577,7 @@ function askAsylAI(queryText) {
                     </div>
                     <div>
                         <h4 class="font-bold text-sm text-slate-800 dark:text-slate-200">${acc.name}</h4>
-                        <p class="text-2xl font-black text-slate-900 dark:text-white mt-1">${Number(acc.balance).toLocaleString()} ${sym}</p>
+                        <p class="text-2xl font-black text-slate-900 dark:text-white mt-1">${Number(acc.balance).toLocaleString()} ${nativeSymbol(currencyOf(acc))}</p>
                     </div>
                 `;
                 grid.appendChild(card);
@@ -1538,7 +1591,7 @@ function askAsylAI(queryText) {
             const type = document.getElementById('accInlineType').value;
             const color = document.getElementById('accInlineColor').value;
 
-            APP_STATE.accounts.push({ id: Date.now().toString(), name, balance, type, color });
+            APP_STATE.accounts.push({ id: Date.now().toString(), name, balance, type, color, currency:document.getElementById('accInlineCurrency').value });
             saveState();
             e.target.reset();
             showToast('Счет создан');
@@ -1589,7 +1642,7 @@ function askAsylAI(queryText) {
                     </div>
                     <div class="flex items-center gap-2 shrink-0">
                         <span class="font-black text-xs ${isIncome ? 'text-emerald-600 dark:text-emerald-400' : 'text-slate-900 dark:text-white'}">
-                            ${isTransfer ? '↔' : (isIncome||isDebtReturn) ? '+' : '-'}${Number(t.amount).toLocaleString()} ${sym}
+                            ${isTransfer ? '↔' : (isIncome||isDebtReturn) ? '+' : '-'}${Number(t.amount).toLocaleString()} ${nativeSymbol(t.currency||currencyOf(acc))}
                         </span>
                         <button ${(isTransfer||isDebtReturn)?'class="hidden"':''} onclick="editTransaction('${t.id}')" class="text-slate-400 hover:text-brand-500 text-xs p-1"><i class="fa-solid fa-pen"></i></button>
                         <button onclick="deleteTransaction('${t.id}')" class="text-slate-400 hover:text-rose-500 text-xs p-1"><i class="fa-solid fa-trash"></i></button>
@@ -1612,6 +1665,7 @@ function askAsylAI(queryText) {
             document.getElementById('txId').value = '';
             document.getElementById('txType').value = type;
             document.getElementById('txAmount').value = '';
+            document.getElementById('txCurrency').value = APP_STATE.currency;
             document.getElementById('txNote').value = '';
             document.getElementById('txDate').value = new Date().toISOString().split('T')[0];
             document.getElementById('txModalTitle').textContent = type === 'income' ? 'Добавить Доход' : 'Добавить Расход';
@@ -1634,54 +1688,27 @@ function askAsylAI(queryText) {
         }
 
         function handleTransactionSubmit(e) {
-            e.preventDefault();
-            const txId = document.getElementById('txId').value;
-            const type = document.getElementById('txType').value;
-            const amount = Number(document.getElementById('txAmount').value);
-            const accountId = document.getElementById('txAccountSelect').value;
-            const dateStr = document.getElementById('txDate').value;
-            const note = document.getElementById('txNote').value;
-
-            const category = type === 'expense' 
-                ? (document.getElementById('txCategoryExpenseInput').value.trim() || 'Расход')
-                : (document.getElementById('txCategoryIncomeInput').value.trim() || 'Доход');
-
-            const acc = APP_STATE.accounts.find(a => a.id === accountId);
-            if (!acc) return;
-
-            if (txId) {
-                const existingTx = APP_STATE.transactions.find(t => t.id === txId);
-                if (existingTx) {
-                    const prevAcc = APP_STATE.accounts.find(a => a.id === existingTx.accountId);
-                    if (prevAcc) {
-                        if (existingTx.type === 'expense') prevAcc.balance += Number(existingTx.amount);
-                        else prevAcc.balance -= Number(existingTx.amount);
-                    }
-                    existingTx.type = type;
-                    existingTx.amount = amount;
-                    existingTx.accountId = accountId;
-                    existingTx.category = category;
-                    existingTx.note = note;
-                    existingTx.date = new Date(dateStr).toISOString();
-                }
-            } else {
-                APP_STATE.transactions.push({
-                    id: Date.now().toString(),
-                    type,
-                    amount,
-                    accountId,
-                    category,
-                    note,
-                    date: new Date(dateStr).toISOString()
-                });
-            }
-
-            if (type === 'expense') acc.balance -= amount;
-            else acc.balance += amount;
-
-            saveState();
-            closeModal('modalTransaction');
-            showToast('Транзакция сохранена!');
+          e.preventDefault();
+          const txId=document.getElementById('txId').value;
+          const type=document.getElementById('txType').value,amount=Number(document.getElementById('txAmount').value);
+          const currency=document.getElementById('txCurrency').value,accountId=document.getElementById('txAccountSelect').value;
+          const dateStr=document.getElementById('txDate').value,note=document.getElementById('txNote').value;
+          const category=type==='expense'?(document.getElementById('txCategoryExpenseInput').value.trim()||'Расход'):(document.getElementById('txCategoryIncomeInput').value.trim()||'Доход');
+          const acc=APP_STATE.accounts.find(a=>a.id===accountId);
+          if(!acc||!Number.isFinite(amount)||amount<=0)return alert('Проверьте сумму и счёт');
+          const accountAmount=convertAmount(amount,currency,currencyOf(acc));
+          if(!Number.isFinite(accountAmount))return alert('Укажите курсы валют в настройках');
+          if(txId){
+            const old=APP_STATE.transactions.find(t=>t.id===txId);
+            if(!old)return;
+            const oldAcc=APP_STATE.accounts.find(a=>a.id===old.accountId);
+            if(oldAcc)oldAcc.balance+=old.type==='expense'?Number(old.accountAmount??old.amount):-Number(old.accountAmount??old.amount);
+            Object.assign(old,{type,amount,currency,accountAmount,accountId,category,note,date:new Date(dateStr+'T12:00:00').toISOString()});
+          }else{
+            APP_STATE.transactions.push({id:crypto.randomUUID(),type,amount,currency,accountAmount,accountId,category,note,date:new Date(dateStr+'T12:00:00').toISOString()});
+          }
+          acc.balance+=type==='expense'?-accountAmount:accountAmount;
+          saveState();closeModal('modalTransaction');showToast('Транзакция сохранена');
         }
 
         function editTransaction(id) {
@@ -1692,6 +1719,7 @@ function askAsylAI(queryText) {
             openTransactionModal(t.type);
             document.getElementById('txId').value = t.id;
             document.getElementById('txAmount').value = t.amount;
+            document.getElementById('txCurrency').value=t.currency||currencyOf(APP_STATE.accounts.find(a=>a.id===t.accountId));
             document.getElementById('txAccountSelect').value = t.accountId;
             document.getElementById('txDate').value = new Date(t.date).toISOString().split('T')[0];
             document.getElementById('txNote').value = t.note || '';
@@ -1710,8 +1738,8 @@ function askAsylAI(queryText) {
             if (confirm('Удалить эту операцию?')) {
                 const acc = APP_STATE.accounts.find(a => a.id === t.accountId);
                 if (acc) {
-                    if(t.type==='debt_return'){acc.balance-=Number(t.amount);const d=APP_STATE.debts.find(d=>d.type==='owed_to_me'&&d.paid&&d.bank===t.note&&Number(d.amount)===Number(t.amount));if(d)d.paid=false;}else if(t.type==='transfer'){acc.balance+=Number(t.amount);const dest=APP_STATE.accounts.find(a=>a.id===t.toAccountId);if(dest)dest.balance-=Number(t.amount);}else if (t.type === 'expense') acc.balance += Number(t.amount);
-                    else acc.balance -= Number(t.amount);
+                    if(t.type==='debt_return'){acc.balance-=Number(t.accountAmount??t.amount);const d=APP_STATE.debts.find(d=>d.type==='owed_to_me'&&d.paid&&d.bank===t.note&&Number(d.amount)===Number(t.amount));if(d)d.paid=false;}else if(t.type==='transfer'){acc.balance+=Number(t.accountAmount??t.amount);const dest=APP_STATE.accounts.find(a=>a.id===t.toAccountId);if(dest)dest.balance-=Number(t.creditedAmount??t.amount);}else if (t.type === 'expense') acc.balance += Number(t.amount);
+                    else acc.balance -= Number(t.accountAmount??t.amount);
                 }
                 APP_STATE.transactions = APP_STATE.transactions.filter(tx => tx.id !== id);
                 saveState();
@@ -2164,7 +2192,18 @@ function askAsylAI(queryText) {
         function chooseCategory(kind,val){const el=document.getElementById('txCategory'+kind+'Input');if(el)el.value=val==='Другое'?'':val;}
         function initCategories(){for(const kind of ['Expense','Income']){const el=document.getElementById('txCategory'+kind+'Preset');if(el)el.innerHTML='<option value="">Выберите категорию</option>'+(kind==='Expense'?EXPENSE_CATS:INCOME_CATS).map(c=>'<option>'+esc(c)+'</option>').join('');}}
         function openTransferModal(){if(APP_STATE.accounts.length<2)return showToast('Создайте минимум два счета');const options=APP_STATE.accounts.map(a=>`<option value="${esc(a.id)}">${esc(a.name)}</option>`).join('');document.getElementById('transferFrom').innerHTML=options;document.getElementById('transferTo').innerHTML=options;document.getElementById('transferTo').selectedIndex=1;document.getElementById('transferAmount').value='';document.getElementById('modalTransfer').classList.remove('hidden');}
-        function submitTransfer(e){e.preventDefault();const from=APP_STATE.accounts.find(a=>a.id===document.getElementById('transferFrom').value),to=APP_STATE.accounts.find(a=>a.id===document.getElementById('transferTo').value),amount=Number(document.getElementById('transferAmount').value);if(!from||!to||from===to||!Number.isFinite(amount)||amount<=0)return alert('Проверьте счета и сумму');if(Number(from.balance)<amount)return alert('Недостаточно средств');from.balance=Number(from.balance)-amount;to.balance=Number(to.balance)+amount;APP_STATE.transactions.push({id:crypto.randomUUID(),type:'transfer',amount,accountId:from.id,toAccountId:to.id,category:'Перевод',note:from.name+' → '+to.name,date:new Date().toISOString()});saveState();closeModal('modalTransfer');showToast('Перевод выполнен');}
+        function submitTransfer(e){e.preventDefault();
+ const from=APP_STATE.accounts.find(a=>a.id===document.getElementById('transferFrom').value);
+ const to=APP_STATE.accounts.find(a=>a.id===document.getElementById('transferTo').value);
+ const amount=Number(document.getElementById('transferAmount').value);
+ if(!from||!to||from===to||!Number.isFinite(amount)||amount<=0)return alert('Проверьте счета и сумму');
+ if(Number(from.balance)<amount)return alert('Недостаточно средств');
+ const credited=convertAmount(amount,currencyOf(from),currencyOf(to));
+ if(!Number.isFinite(credited))return alert('Укажите курсы валют в настройках');
+ if(currencyOf(from)!==currencyOf(to)&&!confirm(amount+' '+currencyOf(from)+' → '+credited.toFixed(2)+' '+currencyOf(to)+' по заданному курсу. Продолжить?'))return;
+ from.balance-=amount;to.balance+=credited;
+ APP_STATE.transactions.push({id:crypto.randomUUID(),type:'transfer',amount,creditedAmount:credited,currency:currencyOf(from),toCurrency:currencyOf(to),accountId:from.id,toAccountId:to.id,category:'Перевод',note:from.name+' → '+to.name,date:new Date().toISOString()});
+ saveState();closeModal('modalTransfer');showToast('Перевод выполнен');}
         function setPalette(v){APP_STATE.palette=v;applyPalette();saveState();}
         function applyPalette(){const colors={graphite:['#475569','#334155'],blue:['#2563eb','#1d4ed8'],red:['#e11d48','#be123c'],emerald:['#059669','#047857'],purple:['#7c3aed','#6d28d9']};const [a,b]=colors[APP_STATE.palette]||colors.graphite;document.documentElement.style.setProperty('--cc-primary',a);document.documentElement.style.setProperty('--cc-hover',b);const el=document.getElementById('paletteSelect');if(el)el.value=APP_STATE.palette;}
         function openRecurringModal(){document.getElementById('modalRecurring').classList.remove('hidden');}
@@ -2178,6 +2217,54 @@ function askAsylAI(queryText) {
         function reminderDue(r){const now=new Date(),target=new Date(now.getFullYear(),now.getMonth(),Math.min(r.day,new Date(now.getFullYear(),now.getMonth()+1,0).getDate()),...(r.time||'10:00').split(':').map(Number));target.setDate(target.getDate()-Number(r.before||0));return now>=target&&!r.paidMonths?.includes(monthKey());}
         function renderReminderList(){const el=document.getElementById('remindersList');if(!el)return;const toggle=document.getElementById('remindersEnabled');if(toggle)toggle.checked=APP_STATE.remindersEnabled;const due=APP_STATE.recurring.filter(r=>r.notify&&reminderDue(r));const debts=APP_STATE.debts.filter(d=>d.type==='my_debts'&&d.notif&&!d.paid).map(d=>({name:'Кредит: '+d.bank,amount:d.amount}));el.innerHTML=(due.length||debts.length)?due.concat(debts).map(r=>`<p class="text-xs p-2 rounded-lg bg-amber-50 dark:bg-amber-950/30">🔔 ${esc(r.name)} — ${Number(r.amount).toLocaleString()} ${CURRENCY_SYMBOLS[APP_STATE.currency]}</p>`).join(''):'<p class="text-xs text-slate-400">Нет активных напоминаний на сегодня</p>';}
         function checkReminders(){if(!APP_STATE.remindersEnabled)return;const key=monthKey();for(const r of APP_STATE.recurring){if(!r.notify||!reminderDue(r))continue;const seenKey='cashcontrol_notified_'+key+'_'+r.id;if(localStorage.getItem(seenKey))continue;localStorage.setItem(seenKey,'1');if('Notification'in window&&Notification.permission==='granted')new Notification('Cashcontrol: '+r.name,{body:'Платёж '+Number(r.amount).toLocaleString()+' '+CURRENCY_SYMBOLS[APP_STATE.currency]});else showToast('Напоминание: '+r.name);}}
+        let statementCandidates=[];
+        async function parseStatementPdf(file){
+          const box=document.getElementById('statementPreview');statementCandidates=[];
+          if(!file)return;
+          if(file.size>12*1024*1024){box.textContent='Максимальный размер PDF — 12 МБ';return;}
+          if(!window.pdfjsLib){box.textContent='Библиотека PDF не загрузилась. Проверьте подключение.';return;}
+          box.textContent='Чтение PDF на устройстве…';
+          try{
+            pdfjsLib.GlobalWorkerOptions.workerSrc='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+            const doc=await pdfjsLib.getDocument({data:await file.arrayBuffer()}).promise;
+            const lines=[];
+            for(let i=1;i<=Math.min(doc.numPages,35);i++){
+              const page=await doc.getPage(i),items=(await page.getTextContent()).items,rows=new Map();
+              for(const item of items){const y=Math.round(item.transform[5]/4)*4,x=item.transform[4];if(!rows.has(y))rows.set(y,[]);rows.get(y).push({x,text:item.str});}
+              for(const [y,parts] of [...rows.entries()].sort((a,b)=>b[0]-a[0]))lines.push(parts.sort((a,b)=>a.x-b.x).map(p=>p.text).join(' ').trim());
+            }
+            const pattern=/([+−-])\s*([\d\s\u00a0]+(?:[,.]\d{1,2})?)\s*(₸|KZT|тенге|тг)/gi;
+            for(const line of lines){
+              if(!line||/итого|остаток|баланс|всего|доступно/i.test(line))continue;
+              pattern.lastIndex=0;let m;
+              while((m=pattern.exec(line))!==null){
+                const amount=Number(m[2].replace(/[\s\u00a0]/g,'').replace(',','.'));
+                if(!Number.isFinite(amount)||amount<=0)continue;
+                const d=line.match(/(\d{2})[.\/-](\d{2})[.\/-](\d{4})/);
+                statementCandidates.push({id:crypto.randomUUID(),type:m[1]==='+'?'income':'expense',amount,date:d?d[3]+'-'+d[2]+'-'+d[1]:new Date().toISOString().slice(0,10),note:line.slice(0,160)});
+              }
+            }
+            if(!statementCandidates.length){box.textContent='Операции не найдены. Возможно, это скан или другой формат PDF. Ничего не импортировано.';return;}
+            const opts=APP_STATE.accounts.filter(a=>currencyOf(a)==='KZT').map(a=>'<option value="'+esc(a.id)+'">'+esc(a.name)+'</option>').join('');
+            if(!opts){box.textContent='Сначала создайте счёт в тенге для импорта.';return;}
+            box.innerHTML='<p class="text-amber-600">Проверьте даты, знаки, суммы и дубликаты. Строки без даты используют сегодняшнюю дату.</p><label>Счёт<select id="statementAccount" class="w-full p-2 rounded-lg bg-slate-100 dark:bg-slate-800">'+opts+'</select></label><div id="statementRows" class="max-h-64 overflow-y-auto space-y-1"></div><button onclick="importStatementSelected()" class="p-2 bg-emerald-600 text-white rounded-xl">Импортировать выбранное</button>';
+            document.getElementById('statementRows').innerHTML=statementCandidates.map((r,i)=>'<label class="block p-2 border rounded-lg"><input type="checkbox" class="statementCheck" data-i="'+i+'"> '+(r.type==='expense'?'−':'+')+r.amount.toLocaleString()+' ₸ · '+esc(r.date)+' · '+esc(r.note)+'</label>').join('');
+          }catch(err){console.error(err);box.textContent='Не удалось прочитать PDF: '+err.message;}
+        }
+        function importStatementSelected(){
+          if(!currentSupabaseUser||!cloudSyncReady)return alert('Войдите в облачный аккаунт для сохранения импорта.');
+          const acc=APP_STATE.accounts.find(a=>a.id===document.getElementById('statementAccount')?.value);
+          if(!acc||currencyOf(acc)!=='KZT')return alert('Выберите счёт в KZT');
+          const ids=[...document.querySelectorAll('.statementCheck:checked')].map(e=>Number(e.dataset.i));
+          if(!ids.length)return alert('Выберите операции');
+          if(!confirm('Импортировать '+ids.length+' операций? Баланс изменится. Проверьте дубликаты.'))return;
+          for(const i of ids){const t=statementCandidates[i];if(!t)continue;
+            APP_STATE.transactions.push({...t,accountId:acc.id,currency:'KZT',accountAmount:t.amount,category:'Импорт выписки',source:'pdf-import',date:new Date(t.date+'T12:00:00').toISOString()});
+            acc.balance+=t.type==='income'?t.amount:-t.amount;
+          }
+          statementCandidates=[];document.getElementById('statementPreview').textContent='Импортировано '+ids.length+' операций. Проверьте статус синхронизации.';
+          saveState();
+        }
         function showAsylPreview(){const expenses=APP_STATE.transactions.filter(t=>t.type==='expense');const sum=expenses.reduce((a,t)=>a+Number(t.amount),0);const groups={};for(const t of expenses)groups[t.category]=(groups[t.category]||0)+Number(t.amount);const top=Object.entries(groups).sort((a,b)=>b[1]-a[1])[0];document.getElementById('asylResult').textContent=`Локальная статистика (не ИИ): расходов ${sum.toLocaleString()} ${CURRENCY_SYMBOLS[APP_STATE.currency]}. ${top?'Больше всего: '+top[0]+' — '+top[1].toLocaleString(): 'Добавьте расходы для анализа.'}`;}
         document.addEventListener('DOMContentLoaded',()=>{initCategories();applyPalette();renderRecurring();renderReminderList();checkReminders();setInterval(()=>{checkReminders();renderReminderList();},60000);});
 
