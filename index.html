@@ -320,6 +320,10 @@
                               <input id="statementPdf" type="file" accept="application/pdf,.pdf" class="w-full text-xs" onchange="parseStatementPdf(this.files[0])">
                               <div id="statementPreview" class="text-xs space-y-2"></div>
                             </div>
+                            <div class="flex flex-wrap items-center gap-2 mb-3">
+                                <button type="button" onclick="bulkDeleteIncomeExpenses()" class="px-3 py-2 text-xs rounded-lg bg-rose-100 text-rose-700 dark:bg-rose-950 dark:text-rose-300">Удалить все доходы и расходы</button>
+                                <span class="text-xs text-slate-500">Переводы и возвраты долгов сохраняются. Балансы пересчитываются.</span>
+                            </div>
                             <div id="fullTransactionsList" class="space-y-2.5 max-h-96 overflow-y-auto pr-1"></div>
                         </div>
                     </div>
@@ -1544,7 +1548,7 @@ try {
                         <span class="px-2.5 py-1 rounded-full text-[10px] font-bold text-white" style="background-color: ${acc.color || '#e11d48'}">
                             ${acc.type === 'deposit' ? 'Депозит' : (acc.type === 'card' ? 'Карта' : 'Наличные')}
                         </span>
-                        <button onclick="deleteAccount('${acc.id}')" class="text-slate-400 hover:text-rose-500 text-xs p-1"><i class="fa-solid fa-trash"></i></button>
+                        <div class="flex items-center gap-2"><button type="button" onclick="editAccount('${acc.id}')" title="Изменить счёт" class="text-blue-500 hover:text-blue-700 text-xs p-1"><i class="fa-solid fa-pen"></i></button><button type="button" onclick="deleteAccount('${acc.id}')" title="Удалить счёт" class="text-slate-400 hover:text-rose-500 text-xs p-1"><i class="fa-solid fa-trash"></i></button></div>
                     </div>
                     <div>
                         <h4 class="font-bold text-sm text-slate-800 dark:text-slate-200">${acc.name}</h4>
@@ -1601,6 +1605,30 @@ try {
                 setCloudStatus('Счёт сохранён в браузере. Войдите в Supabase и проверьте синхронизацию.');
             }
             showToast('Счёт создан: ' + name + ' — ' + balance.toLocaleString('ru-RU') + ' ' + currencySign(currency));
+        }
+
+        function editAccount(id) {
+            const acc=APP_STATE.accounts.find(a=>String(a.id)===String(id));
+            if(!acc)return;
+            const name=prompt('Название счёта:',acc.name);
+            if(name===null)return;
+            if(!name.trim())return alert('Название не может быть пустым');
+            const raw=prompt('Правильный текущий баланс ('+currencySign(currencyOf(acc))+'):',String(moneyNumber(acc.balance)));
+            if(raw===null)return;
+            const balance=Number(raw.trim().replace(/\\s/g,'').replace(',','.'));
+            if(!Number.isFinite(balance)||balance<0)return alert('Введите корректную сумму');
+            const hasHistory=APP_STATE.transactions.some(t=>t.accountId===id||t.toAccountId===id);
+            let currency=currencyOf(acc);
+            if(!hasHistory){
+                const choice=prompt('Валюта счёта (KZT, USD, EUR, RUB):',currency);
+                if(choice===null)return;
+                if(!['KZT','USD','EUR','RUB'].includes(choice.trim().toUpperCase()))return alert('Неизвестная валюта');
+                currency=choice.trim().toUpperCase();
+            }
+            // Manual balance correction is NOT income or expense.
+            acc.name=name.trim();acc.balance=balance;acc.currency=currency;
+            saveState();
+            showToast('Счёт исправлен. Корректировка баланса не является доходом.');
         }
 
         function deleteAccount(id) {
@@ -1785,6 +1813,23 @@ try {
                 saveState();
                 showToast('Операция удалена');
             }
+        }
+
+        function bulkDeleteIncomeExpenses() {
+            const targets=APP_STATE.transactions.filter(t=>t.type==='income'||t.type==='expense');
+            if(!targets.length)return alert('Нет доходов и расходов для удаления');
+            if(!confirm('Удалить сразу '+targets.length+' операций доходов и расходов? Это изменит балансы счетов. Действие нельзя отменить без резервной копии.'))return;
+            // Undo each operation in its account currency; transfers and debt returns remain.
+            for(const t of targets){
+                const acc=APP_STATE.accounts.find(a=>a.id===t.accountId);
+                if(!acc)continue;
+                const amount=moneyNumber(t.accountAmount??t.amount);
+                acc.balance=moneyNumber(acc.balance)+(t.type==='expense'?amount:-amount);
+            }
+            const removed=new Set(targets.map(t=>t.id));
+            APP_STATE.transactions=APP_STATE.transactions.filter(t=>!removed.has(t.id));
+            saveState();
+            showToast('Удалено операций: '+targets.length);
         }
 
         // WISHLIST
@@ -2271,35 +2316,53 @@ try {
               for(const item of items){const y=Math.round(item.transform[5]/4)*4;const x=item.transform[4];if(!rows.has(y))rows.set(y,[]);rows.get(y).push({x,text:item.str});}
               for(const [y,parts] of [...rows.entries()].sort((a,b)=>b[0]-a[0])) lines.push(parts.sort((a,b)=>a.x-b.x).map(p=>p.text).join(' ').trim());
             }
-            const amounts=/([+−-])\s*([\d\s\u00a0]+(?:[,.]\d{1,2})?)\s*(₸|KZT|тенге|тг)/gi;
+            const amounts=/([+−-])\\s*([\\d\\s\\u00a0]+(?:[,.]\\d{1,2})?)\\s*(₸|KZT|тенге|тг)/gi;
+            let skippedNoDate=0;
+            const seenInFile=new Set();
             for(const line of lines){
               if(!line||/итого|остаток|баланс|всего|доступно/i.test(line))continue;
+              const dm=line.match(/(\\d{2})[.\\/-](\\d{2})[.\\/-](\\d{4})/);
+              if(!dm){if(/[+−-]\\s*\\d[\\d\\s]*\\s*(?:₸|KZT|тенге|тг)/i.test(line))skippedNoDate++;continue;}
+              const date=`${dm[3]}-${dm[2]}-${dm[1]}`;
+              if(!Number.isFinite(new Date(date+'T12:00:00').getTime()))continue;
+              amounts.lastIndex=0;
               let m;
               while((m=amounts.exec(line))!==null){
-                const val=Number(m[2].replace(/[\s\u00a0]/g,'').replace(',','.'));
+                const val=Number(m[2].replace(/[\\s\\u00a0]/g,'').replace(',','.'));
                 if(!Number.isFinite(val)||val<=0)continue;
-                const dm=line.match(/(\d{2})[.\/-](\d{2})[.\/-](\d{4})/);
-                const date=dm?`${dm[3]}-${dm[2]}-${dm[1]}`:new Date().toISOString().slice(0,10);
-                pendingStatementRows.push({id:crypto.randomUUID(),type:m[1]==='+'?'income':'expense',amount:val,date,note:line.slice(0,160)});
+                const type=m[1]==='+'?'income':'expense';
+                const signature=JSON.stringify([date,type,val,line.trim().replace(/\\s+/g,' ')]);
+                if(seenInFile.has(signature))continue;
+                seenInFile.add(signature);
+                pendingStatementRows.push({id:(crypto.randomUUID?crypto.randomUUID():String(Date.now()+pendingStatementRows.length)),type,amount:val,date,note:line.slice(0,160),signature});
               }
             }
-            if(!pendingStatementRows.length){box.textContent='Не удалось надёжно распознать операции. Возможно, PDF — скан или другой формат. Ничего не импортировано.';return;}
+            if(!pendingStatementRows.length){box.textContent='Не удалось распознать датированные операции. Возможно, PDF — скан или другой формат. Ничего не импортировано.';return;}
             const opts=APP_STATE.accounts.filter(a=>currencyOf(a)==='KZT').map(a=>`<option value="${esc(a.id)}">${esc(a.name)} (KZT)</option>`).join('');
-            box.innerHTML=`<p class="text-amber-600">Найдено ${pendingStatementRows.length} кандидатов. Проверьте суммы, знаки и даты: автоматическое распознавание может ошибаться. Строки без даты используют сегодняшнюю дату.</p><label>Счёт для операций<select id="statementAccount" class="w-full p-2 rounded-lg bg-white dark:bg-slate-900">${opts}</select></label><div id="statementRows" class="max-h-64 overflow-y-auto space-y-1"></div><button type="button" onclick="importStatementSelected()" class="p-2 rounded-xl bg-emerald-600 text-white">Импортировать отмеченные</button>`;
-            document.getElementById('statementRows').innerHTML=pendingStatementRows.map((r,i)=>`<label class="block p-2 border rounded-lg"><input type="checkbox" class="statementCheck" data-i="${i}"> ${r.type==='expense'?'−':'+'}${r.amount.toLocaleString()} ₸ · ${esc(r.date)} · ${esc(r.note.slice(0,95))}</label>`).join('');
+            box.innerHTML=`<p class="text-amber-600">Найдено ${pendingStatementRows.length} операций. ${skippedNoDate?'Пропущено без даты: '+skippedNoDate+'. ':''}Проверьте итог перед импортом: распознавание PDF может ошибаться. Дубли из предыдущих импортов будут пропущены.</p><label>Счёт для операций<select id="statementAccount" class="w-full p-2 rounded-lg bg-white dark:bg-slate-900">${opts}</select></label><div id="statementRows" class="max-h-64 overflow-y-auto space-y-1"></div><button type="button" onclick="importStatementAll()" class="p-2 rounded-xl bg-emerald-600 text-white font-bold">Импортировать ВСЕ операции</button>`;
+            document.getElementById('statementRows').innerHTML=pendingStatementRows.map(r=>`<div class="block p-2 border rounded-lg">${r.type==='expense'?'−':'+'}${r.amount.toLocaleString('ru-RU')} ₸ · ${esc(r.date)} · ${esc(r.note.slice(0,95))}</div>`).join('');
             if(!opts)box.innerHTML='<p>Сначала создайте счёт в KZT для импорта.</p>';
           }catch(e){console.error(e);box.textContent='Ошибка чтения PDF: '+e.message;}
         }
-        function importStatementSelected(){
-          if(!currentSupabaseUser||!cloudSyncReady)return alert('Сначала войдите в подтверждённый облачный аккаунт, чтобы импорт сохранялся в базе.');
+        function importStatementAll(){
+          if(!currentSupabaseUser||!cloudSyncReady)return alert('Сначала войдите в облачный аккаунт. Без этого PDF-импорт в Supabase не гарантирован.');
           const id=document.getElementById('statementAccount')?.value,acc=APP_STATE.accounts.find(a=>a.id===id);
           if(!acc||currencyOf(acc)!=='KZT')return alert('Выберите счёт KZT');
-          const indexes=[...document.querySelectorAll('.statementCheck:checked')].map(x=>Number(x.dataset.i));
-          if(!indexes.length)return alert('Отметьте операции для импорта');
-          if(!confirm(`Импортировать ${indexes.length} операций? Баланс счёта изменится. Проверьте, что эти операции не добавлены ранее.`))return;
-          for(const i of indexes){const r=pendingStatementRows[i];if(!r)continue;APP_STATE.transactions.push({id:r.id,accountId:id,type:r.type,amount:r.amount,currency:'KZT',category:'Импорт выписки',note:r.note,date:new Date(r.date+'T12:00:00').toISOString(),source:'pdf-import'});acc.balance+=r.type==='income'?r.amount:-r.amount;}
-          pendingStatementRows=[];document.getElementById('statementPreview').textContent='Импортировано '+indexes.length+' операций. Проверьте синхронизацию Supabase.';saveState();
+          const known=new Set(APP_STATE.transactions.filter(t=>t.source==='pdf-import'&&t.accountId===id).map(t=>t.importSignature).filter(Boolean));
+          const rows=pendingStatementRows.filter(r=>!known.has(r.signature));
+          if(!rows.length)return alert('Все операции из этой выписки уже импортированы.');
+          const expenses=rows.filter(r=>r.type==='expense').reduce((n,r)=>n+r.amount,0);
+          const incomes=rows.filter(r=>r.type==='income').reduce((n,r)=>n+r.amount,0);
+          if(!confirm(`Импортировать ВСЕ ${rows.length} операции?\nДоходы: ${incomes.toFixed(2)} ₸\nРасходы: ${expenses.toFixed(2)} ₸\nПропущено повторов: ${pendingStatementRows.length-rows.length}\n\nВНИМАНИЕ: баланс изменится на сумму этих операций. Если начальный баланс уже включает эти операции, потребуется вручную скорректировать баланс счёта.`))return;
+          for(const r of rows){
+            APP_STATE.transactions.push({id:r.id,accountId:id,type:r.type,amount:r.amount,accountAmount:r.amount,currency:'KZT',category:'Импорт выписки',note:r.note,date:new Date(r.date+'T12:00:00').toISOString(),source:'pdf-import',importSignature:r.signature});
+            acc.balance+=r.type==='income'?r.amount:-r.amount;
+          }
+          pendingStatementRows=[];
+          document.getElementById('statementPreview').textContent='Импортировано '+rows.length+' операций. Проверьте облачную синхронизацию.';
+          saveState();
         }
+        function importStatementSelected(){importStatementAll();}
 
         function showAsylPreview(){const expenses=APP_STATE.transactions.filter(t=>t.type==='expense');const sum=expenses.reduce((a,t)=>a+Number(t.amount),0);const groups={};for(const t of expenses)groups[t.category]=(groups[t.category]||0)+Number(t.amount);const top=Object.entries(groups).sort((a,b)=>b[1]-a[1])[0];document.getElementById('asylResult').textContent=`Локальная статистика (не ИИ): расходов ${sum.toLocaleString()} ${CURRENCY_SYMBOLS[APP_STATE.currency]}. ${top?'Больше всего: '+top[0]+' — '+top[1].toLocaleString(): 'Добавьте расходы для анализа.'}`;}
         document.addEventListener('DOMContentLoaded',()=>{initCategories();applyPalette();renderRecurring();renderReminderList();checkReminders();setInterval(()=>{checkReminders();renderReminderList();},60000);});
