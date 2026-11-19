@@ -396,8 +396,6 @@
                             <p id="fxLiveStatus" class="text-xs text-slate-500" aria-live="polite">Загружаем курсы валют…</p>
                             <button type="button" onclick="refreshLiveRates(true)" class="text-xs font-semibold text-brand-600 underline">Обновить курсы сейчас</button>
                         </div>
-                            <p class="text-xs text-amber-600">Курсы задаются вручную. Это не биржевые котировки в реальном времени. Старые счета считаются в KZT.</p>
-                        </div>
 
 
                         <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-5 rounded-3xl space-y-3">
@@ -420,7 +418,7 @@
                         </div>
                         <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-5 rounded-3xl space-y-3">
                             <h3 class="font-bold">✨ Asyl AI</h3>
-                            <p class="text-xs text-slate-400">Будущий финансовый помощник. Для настоящего ИИ потребуется защищённый сервер и API модели.</p>
+                            <p class="text-xs text-slate-400">Единственный раздел Asyl AI. Реальный ИИ будет доступен после безопасного подключения модели через сервер; сейчас работает только локальная статистика.</p>
                             <button onclick="showAsylPreview()" class="w-full p-3 rounded-xl bg-slate-100 dark:bg-slate-800 text-sm font-bold">Посмотреть анализ расходов</button>
                             <div id="asylResult" class="text-sm"></div>
                             <div class="border-t border-slate-200 dark:border-slate-800 pt-3"><b>Подписка Asyl AI</b><p class="text-xs text-slate-400 mt-1">Оплата пока не подключена. Списаний не будет; оформление появится после подключения платёжного провайдера и серверной проверки подписки.</p></div>
@@ -485,26 +483,7 @@
         </a>
     </div>
 </div>
-<!-- ИИ-Помощник Asyl AI -->
-<div class="bg-gradient-to-br from-brand-900 to-rose-950 text-white p-6 rounded-3xl space-y-3 border border-rose-800/50 shadow-xl">
-    <div class="flex items-center justify-between">
-        <div class="flex items-center gap-3">
-            <div class="w-10 h-10 rounded-2xl bg-rose-500/20 flex items-center justify-center text-rose-300 text-xl">
-                <i class="fa-solid fa-brain"></i>
-            </div>
-            <div>
-                <h3 class="font-bold text-lg">Asyl AI</h3>
-                <p class="text-xs text-rose-200">Персональный финансовый помощник</p>
-            </div>
-        </div>
-        <span class="px-2.5 py-1 rounded-full text-[10px] font-bold bg-rose-500/30 text-rose-200 border border-rose-400/30 uppercase tracking-wider">Скоро</span>
-    </div>
-    
-    <p class="text-xs text-slate-300 leading-relaxed">
-        Умный финансовый консультант <strong>Asyl AI</strong> поможет анализировать доходы и расходы, автоматически составлять лимит трат и давать советы по экономии бюджета. Функция будет доступна после подключения API.
-    </p>
-</div>
-                        <!-- Theme Toggle Card -->
+<!-- Theme Toggle Card -->
                         <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-5 rounded-3xl flex items-center justify-between shadow-sm">
                             <div>
                                 <p class="font-bold text-sm">Тема оформления</p>
@@ -1542,18 +1521,19 @@ try {
                 overviewList.appendChild(item);
 
                 const card = document.createElement('div');
-                card.className = "bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-5 rounded-3xl space-y-3 relative shadow-sm";
+                card.className = "relative overflow-hidden rounded-3xl p-5 text-white shadow-xl min-h-[185px] flex flex-col justify-between";
+                card.style.background = acc.type === 'cash' ? 'linear-gradient(135deg,#146c43,#0a3c2b)' : acc.type === 'deposit' ? 'linear-gradient(135deg,#20344f,#111b30)' : `linear-gradient(125deg,${/^#[0-9a-fA-F]{6}$/.test(acc.color||'')?acc.color:'#243b69'},#172033)`;
                 card.innerHTML = `
-                    <div class="flex items-center justify-between">
-                        <span class="px-2.5 py-1 rounded-full text-[10px] font-bold text-white" style="background-color: ${acc.color || '#e11d48'}">
-                            ${acc.type === 'deposit' ? 'Депозит' : (acc.type === 'card' ? 'Карта' : 'Наличные')}
-                        </span>
-                        <div class="flex items-center gap-2"><button type="button" onclick="editAccount('${acc.id}')" title="Изменить счёт" class="text-blue-500 hover:text-blue-700 text-xs p-1"><i class="fa-solid fa-pen"></i></button><button type="button" onclick="deleteAccount('${acc.id}')" title="Удалить счёт" class="text-slate-400 hover:text-rose-500 text-xs p-1"><i class="fa-solid fa-trash"></i></button></div>
+                    <div class="absolute -right-8 -top-12 w-40 h-40 rounded-full bg-white/10 pointer-events-none"></div>
+                    <div class="absolute -left-8 -bottom-24 w-48 h-48 rounded-full bg-white/5 pointer-events-none"></div>
+                    <div class="relative flex items-start justify-between gap-3">
+                      <div><p class="text-[10px] uppercase tracking-[.2em] text-white/70">${acc.type === 'cash' ? 'Наличные' : acc.type === 'deposit' ? 'Накопления' : 'Банковская карта'}</p>
+                      <h4 class="font-semibold text-base mt-1 truncate max-w-[200px]">${esc(acc.name)}</h4></div>
+                      <div class="flex items-center gap-2"><button type="button" onclick="editAccount('${acc.id}')" title="Изменить счёт" class="p-2 rounded-xl bg-white/15 hover:bg-white/25"><i class="fa-solid fa-pen text-xs"></i></button><button type="button" onclick="deleteAccount('${acc.id}')" title="Удалить счёт" class="p-2 rounded-xl bg-white/15 hover:bg-white/25"><i class="fa-solid fa-trash text-xs"></i></button></div>
                     </div>
-                    <div>
-                        <h4 class="font-bold text-sm text-slate-800 dark:text-slate-200">${acc.name}</h4>
-                        <p class="text-2xl font-black text-slate-900 dark:text-white mt-1">${moneyNumber(acc.balance).toLocaleString('ru-RU',{maximumFractionDigits:2})} ${currencySign(currencyOf(acc))}</p>
-                    </div>
+                    <div class="relative"><i class="fa-solid ${acc.type==='cash'?'fa-money-bill-wave':acc.type==='deposit'?'fa-vault':'fa-sim-card'} text-2xl text-white/70 mb-2"></i>
+                      <p class="text-[10px] tracking-wide text-white/70">Текущий баланс</p>
+                      <p class="text-2xl font-black tracking-tight">${moneyNumber(acc.balance).toLocaleString('ru-RU',{minimumFractionDigits:2,maximumFractionDigits:2})} ${currencySign(currencyOf(acc))}</p></div>
                 `;
                 grid.appendChild(card);
             });
@@ -1659,7 +1639,7 @@ try {
             sorted.forEach((t, index) => {
                 const acc = APP_STATE.accounts.find(a => a.id === t.accountId);
                 const isIncome = t.type === 'income';
-                const isTransfer = t.type === 'transfer';
+                const isTransfer = t.type === 'transfer' || t.type === 'statement_internal';
                 const isDebtReturn=t.type==='debt_return';
 
                 const item = document.createElement('div');
@@ -1678,7 +1658,7 @@ try {
                         <span class="font-black text-xs ${isIncome ? 'text-emerald-600 dark:text-emerald-400' : 'text-slate-900 dark:text-white'}">
                             ${isTransfer ? '↔' : (isIncome||isDebtReturn) ? '+' : '-'}${moneyNumber(t.amount).toLocaleString('ru-RU',{maximumFractionDigits:2})} ${currencySign(t.currency || currencyOf(acc))}
                         </span>
-                        <button ${(isTransfer||isDebtReturn)?'class="hidden"':''} onclick="editTransaction('${t.id}')" class="text-slate-400 hover:text-brand-500 text-xs p-1"><i class="fa-solid fa-pen"></i></button>
+                        <button ${(isTransfer||isDebtReturn||t.statementNoBalanceImpact)?'class="hidden"':''} onclick="editTransaction('${t.id}')" class="text-slate-400 hover:text-brand-500 text-xs p-1"><i class="fa-solid fa-pen"></i></button>
                         <button onclick="deleteTransaction('${t.id}')" class="text-slate-400 hover:text-rose-500 text-xs p-1"><i class="fa-solid fa-trash"></i></button>
                     </div>
                 `;
@@ -1805,7 +1785,7 @@ try {
 
             if (confirm('Удалить эту операцию?')) {
                 const acc = APP_STATE.accounts.find(a => a.id === t.accountId);
-                if (acc) {
+                if (acc && !t.statementNoBalanceImpact) {
                     if(t.type==='debt_return'){acc.balance-=Number(t.amount);const d=APP_STATE.debts.find(d=>d.type==='owed_to_me'&&d.paid&&d.bank===t.note&&Number(d.amount)===Number(t.amount));if(d)d.paid=false;}else if(t.type==='transfer'){acc.balance+=Number(t.amount);const dest=APP_STATE.accounts.find(a=>a.id===t.toAccountId);if(dest)dest.balance-=Number(t.creditedAmount??t.amount);}else if (t.type === 'expense') acc.balance += Number(t.accountAmount??t.amount);
                     else acc.balance -= Number(t.accountAmount??t.amount);
                 }
@@ -1822,7 +1802,7 @@ try {
             // Undo each operation in its account currency; transfers and debt returns remain.
             for(const t of targets){
                 const acc=APP_STATE.accounts.find(a=>a.id===t.accountId);
-                if(!acc)continue;
+                if(!acc||t.statementNoBalanceImpact)continue;
                 const amount=moneyNumber(t.accountAmount??t.amount);
                 acc.balance=moneyNumber(acc.balance)+(t.type==='expense'?amount:-amount);
             }
@@ -2300,51 +2280,121 @@ try {
           setTimeout(()=>URL.revokeObjectURL(url),1000);
         }
         let pendingStatementRows=[];
+        let statementFileFingerprint='';
+        function kaspiAmount(raw){
+          const n=Number(String(raw).replace(/[\s\u00a0\u202f]/g,'').replace(',','.'));
+          return Number.isFinite(n)?Math.round(n*100)/100:NaN;
+        }
+        function kaspiDate(day,month,year){
+          const yyyy=year.length===2?'20'+year:year;
+          const d=new Date(`${yyyy}-${month}-${day}T12:00:00`);
+          return d.getFullYear()===Number(yyyy)&&d.getMonth()+1===Number(month)&&d.getDate()===Number(day)?`${yyyy}-${month}-${day}`:null;
+        }
+        function kaspiClassify(operation,detail,sign){
+          const op=operation.toLowerCase(),dt=detail.toLowerCase();
+          if(/сво(й|и|е|их|его)|депозит|kaspi red|kaspi кредит/.test(op+' '+dt) && /перевод|поступление|счет/.test(op+' '+dt))return 'own_transfer';
+          if(/перевод/.test(op))return 'external_transfer';
+          if(/покупка|оплата|снятие/.test(op))return 'purchase';
+          if(/пополнение|поступление/.test(op))return 'topup';
+          return 'unknown';
+        }
+        function parseKaspiLines(lines){
+          const rows=[];let last=null;
+          // Only transaction-table lines beginning with a valid date; never read summary totals as operations.
+          const pattern=/(?:^|\s)(\d{2})[.\/-](\d{2})[.\/-](\d{2,4})\s+([+−-])\s*([\d\s\u00a0\u202f]+[,.]\d{2})\s*(?:₸|Т|тг|KZT)?\s+(.+)$/i;
+          for(const raw of lines){
+            const line=String(raw).replace(/[\u00a0\u202f]/g,' ').replace(/\s+/g,' ').trim();
+            const m=line.match(pattern);
+            if(m){
+              const date=kaspiDate(m[1],m[2],m[3]);const amount=kaspiAmount(m[5]);
+              if(!date||!Number.isFinite(amount)||amount<=0)continue;
+              const rest=m[6].trim();
+              const operation=(rest.match(/^(Перевод на свой счет|Поступление со своего счета|Пополнение|Перевод|Покупка|Снятие|Разное)/i)||[])[0]||'Не определено';
+              const detail=rest.slice(operation==='Не определено'?0:operation.length).trim();
+              last={id:crypto.randomUUID(),date,amount,sign:m[4]==='+'?1:-1,operation,detail,kind:kaspiClassify(operation,detail,m[4]),raw:line};
+              rows.push(last);
+            }else if(last && !/^Приложение|^АО |^Доступно|^Итого|^Краткое|^Лимит/i.test(line) && line.length<95 && !/\d{2}[.\/-]\d{2}[.\/-]\d{2,4}/.test(line)){
+              // A wrapped Kaspi operation name, e.g. "Поступление со / своего счета".
+              if(/^(своего счета|счет|счета)$/i.test(line)){
+                last.operation+=' '+line;last.kind=kaspiClassify(last.operation,last.detail,last.sign);
+              }
+            }
+          }
+          return rows;
+        }
         async function parseStatementPdf(file){
           const box=document.getElementById('statementPreview');pendingStatementRows=[];
           if(!file)return;
-          if(file.size>12*1024*1024){box.textContent='Файл слишком большой (максимум 12 МБ)';return;}
+          if(file.size>12*1024*1024){box.textContent='PDF слишком большой (максимум 12 МБ)';return;}
           if(!window.pdfjsLib){box.textContent='PDF.js не загрузился. Проверьте интернет.';return;}
-          box.textContent='Читаем текст PDF локально…';
+          box.textContent='Читаем таблицы Kaspi…';
           try{
             pdfjsLib.GlobalWorkerOptions.workerSrc='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
-            const doc=await pdfjsLib.getDocument({data:await file.arrayBuffer()}).promise;
-            const lines=[];
-            for(let i=1;i<=Math.min(doc.numPages,35);i++){
+            const bytes=new Uint8Array(await file.arrayBuffer());
+            const digest=await crypto.subtle.digest('SHA-256',bytes);
+            statementFileFingerprint=[...new Uint8Array(digest)].map(b=>b.toString(16).padStart(2,'0')).join('');
+            const doc=await pdfjsLib.getDocument({data:bytes}).promise;
+            if(doc.numPages>35)throw Error('Слишком много страниц');
+            const allLines=[];
+            for(let i=1;i<=doc.numPages;i++){
               const page=await doc.getPage(i),items=(await page.getTextContent()).items;
-              const rows=new Map();
-              for(const item of items){const y=Math.round(item.transform[5]/4)*4;const x=item.transform[4];if(!rows.has(y))rows.set(y,[]);rows.get(y).push({x,text:item.str});}
-              for(const [y,parts] of [...rows.entries()].sort((a,b)=>b[0]-a[0])) lines.push(parts.sort((a,b)=>a.x-b.x).map(p=>p.text).join(' ').trim());
+              const groups=new Map();
+              for(const item of items){const y=Math.round(item.transform[5]/3)*3;if(!groups.has(y))groups.set(y,[]);groups.get(y).push({x:item.transform[4],text:item.str});}
+              const lines=[...groups.entries()].sort((a,b)=>b[0]-a[0]).map(([,parts])=>parts.sort((a,b)=>a.x-b.x).map(p=>p.text).join(' ').trim());
+              allLines.push(...lines);
             }
-            const amounts=/([+−-])\s*([\d\s\u00a0]+(?:[,.]\d{1,2})?)\s*(₸|KZT|тенге|тг)/gi;
-            for(const line of lines){
-              if(!line||/итого|остаток|баланс|всего|доступно/i.test(line))continue;
-              let m;
-              while((m=amounts.exec(line))!==null){
-                const val=Number(m[2].replace(/[\s\u00a0]/g,'').replace(',','.'));
-                if(!Number.isFinite(val)||val<=0)continue;
-                const dm=line.match(/(\d{2})[.\/-](\d{2})[.\/-](\d{4})/);
-                const date=dm?`${dm[3]}-${dm[2]}-${dm[1]}`:new Date().toISOString().slice(0,10);
-                pendingStatementRows.push({id:crypto.randomUUID(),type:m[1]==='+'?'income':'expense',amount:val,date,note:line.slice(0,160)});
+            let parsed=parseKaspiLines(allLines);
+            // Kaspi Gold PDFs can contain broken font mappings: visible text is correct, extracted text is gibberish.
+            if(parsed.length<3){
+              box.textContent='В PDF нестандартный шрифт Kaspi. Запускаем локальное распознавание страниц (OCR), это может занять несколько минут…';
+              if(!window.Tesseract){
+                await new Promise((resolve,reject)=>{const sc=document.createElement('script');sc.src='https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js';sc.onload=resolve;sc.onerror=()=>reject(Error('Не удалось загрузить OCR. Проверьте интернет.'));document.head.appendChild(sc);});
               }
+              const worker=await Tesseract.createWorker('rus+eng');
+              const ocrLines=[];
+              try{
+                for(let i=1;i<=doc.numPages;i++){
+                  box.textContent=`Распознаём страницу ${i} из ${doc.numPages} локально…`;
+                  const page=await doc.getPage(i),view=page.getViewport({scale:2.25});
+                  const canvas=document.createElement('canvas');canvas.width=Math.ceil(view.width);canvas.height=Math.ceil(view.height);
+                  await page.render({canvasContext:canvas.getContext('2d'),viewport:view}).promise;
+                  const result=await worker.recognize(canvas);
+                  ocrLines.push(...result.data.text.split(/\r?\n/));
+                  canvas.width=canvas.height=0;
+                }
+              }finally{await worker.terminate();}
+              parsed=parseKaspiLines(ocrLines);
             }
-            if(!pendingStatementRows.length){box.textContent='Не удалось надёжно распознать операции. Возможно, PDF — скан или другой формат. Ничего не импортировано.';return;}
+            if(!parsed.length){box.textContent='Не удалось надёжно распознать строки операций. Данные не изменены. Попробуйте другую PDF-выписку Kaspi Gold.';return;}
+            const unique=new Set();
+            pendingStatementRows=parsed.filter(r=>{const sig=[r.date,r.amount,r.sign,r.operation,r.detail].join('|');const ordinal=(unique.get(sig)||0)+1;unique.set(sig,ordinal);r.signature=statementFileFingerprint+'|'+sig+'|'+ordinal;return true;});
+            const plus=pendingStatementRows.filter(r=>r.sign>0).reduce((n,r)=>n+r.amount,0);
+            const minus=pendingStatementRows.filter(r=>r.sign<0).reduce((n,r)=>n+r.amount,0);
             const opts=APP_STATE.accounts.filter(a=>currencyOf(a)==='KZT').map(a=>`<option value="${esc(a.id)}">${esc(a.name)} (KZT)</option>`).join('');
-            box.innerHTML=`<p class="text-amber-600">Найдено ${pendingStatementRows.length} кандидатов. Проверьте суммы, знаки и даты: автоматическое распознавание может ошибаться. Строки без даты используют сегодняшнюю дату.</p><label>Счёт для операций<select id="statementAccount" class="w-full p-2 rounded-lg bg-white dark:bg-slate-900">${opts}</select></label><div class="flex gap-2 my-2"><button type="button" onclick="setAllStatementChecks(true)" class="p-2 rounded-lg bg-slate-200 text-slate-900">Выбрать все</button><button type="button" onclick="setAllStatementChecks(false)" class="p-2 rounded-lg bg-slate-200 text-slate-900">Снять выбор</button></div><div id="statementRows" class="max-h-64 overflow-y-auto space-y-1"></div><button type="button" onclick="importStatementSelected()" class="p-2 rounded-xl bg-emerald-600 text-white">Импортировать отмеченные</button>`;
-            document.getElementById('statementRows').innerHTML=pendingStatementRows.map((r,i)=>`<label class="block p-2 border rounded-lg"><input type="checkbox" class="statementCheck" data-i="${i}"> ${r.type==='expense'?'−':'+'}${r.amount.toLocaleString()} ₸ · ${esc(r.date)} · ${esc(r.note.slice(0,95))}</label>`).join('');
-            if(!opts)box.innerHTML='<p>Сначала создайте счёт в KZT для импорта.</p>';
+            const fmt=n=>n.toLocaleString('ru-RU',{minimumFractionDigits:2,maximumFractionDigits:2});
+            box.innerHTML=`<p class="font-bold">Распознано ${pendingStatementRows.length} строк. Поступления +${fmt(plus)} ₸, списания −${fmt(minus)} ₸, изменение ${fmt(plus-minus)} ₸.</p><p class="text-amber-600">Внимание: сравните суммы с разделом «Краткое содержание операций» в PDF. При расхождении не импортируйте: OCR может ошибаться. Импорт НЕ изменяет текущий баланс карты, поскольку он уже включает операции за прошлый месяц.</p><label>Счёт<select id="statementAccount" class="w-full p-2 rounded-lg bg-white dark:bg-slate-900">${opts}</select></label><div class="flex gap-2 my-2"><button type="button" onclick="setAllStatementChecks(true)" class="p-2 rounded-lg bg-slate-200 text-slate-900">Выбрать все</button><button type="button" onclick="setAllStatementChecks(false)" class="p-2 rounded-lg bg-slate-200 text-slate-900">Снять выбор</button></div><div id="statementRows" class="max-h-64 overflow-y-auto space-y-1"></div><button type="button" onclick="importStatementSelected()" class="p-2 rounded-xl bg-emerald-600 text-white">Импортировать отмеченные</button>`;
+            document.getElementById('statementRows').innerHTML=pendingStatementRows.map((r,i)=>`<label class="block p-2 border rounded-lg"><input type="checkbox" class="statementCheck" data-i="${i}"> ${r.sign>0?'+':'−'}${fmt(r.amount)} ₸ · ${esc(r.date)} · ${esc(r.operation)} ${esc(r.detail.slice(0,65))}</label>`).join('');
+            if(!opts)box.innerHTML='Сначала создайте счёт в KZT для импорта.';
           }catch(e){console.error(e);box.textContent='Ошибка чтения PDF: '+e.message;}
         }
-        function setAllStatementChecks(checked){document.querySelectorAll(".statementCheck").forEach(box=>{box.checked=checked;});}
+        function setAllStatementChecks(checked){document.querySelectorAll('.statementCheck').forEach(x=>x.checked=checked);}
         function importStatementSelected(){
-          if(!currentSupabaseUser||!cloudSyncReady)return alert('Сначала войдите в подтверждённый облачный аккаунт, чтобы импорт сохранялся в базе.');
+          if(!currentSupabaseUser||!cloudSyncReady)return alert('Сначала войдите в облачный аккаунт для сохранения выписки.');
           const id=document.getElementById('statementAccount')?.value,acc=APP_STATE.accounts.find(a=>a.id===id);
-          if(!acc||currencyOf(acc)!=='KZT')return alert('Выберите счёт KZT');
-          const indexes=[...document.querySelectorAll('.statementCheck:checked')].map(x=>Number(x.dataset.i));
-          if(!indexes.length)return alert('Отметьте операции для импорта');
-          if(!confirm(`Импортировать ${indexes.length} операций? Баланс счёта изменится. Проверьте, что эти операции не добавлены ранее.`))return;
-          for(const i of indexes){const r=pendingStatementRows[i];if(!r)continue;APP_STATE.transactions.push({id:r.id,accountId:id,type:r.type,amount:r.amount,currency:'KZT',category:'Импорт выписки',note:r.note,date:new Date(r.date+'T12:00:00').toISOString(),source:'pdf-import'});acc.balance+=r.type==='income'?r.amount:-r.amount;}
-          pendingStatementRows=[];document.getElementById('statementPreview').textContent='Импортировано '+indexes.length+' операций. Проверьте синхронизацию Supabase.';saveState();
+          if(!acc||currencyOf(acc)!=='KZT')return alert('Выберите счёт в тенге');
+          const rows=[...document.querySelectorAll('.statementCheck:checked')].map(x=>pendingStatementRows[Number(x.dataset.i)]).filter(Boolean);
+          const old=new Set(APP_STATE.transactions.filter(t=>t.source==='pdf-import'&&t.accountId===id).map(t=>t.importSignature));
+          const fresh=rows.filter(r=>!old.has(r.signature));
+          if(!fresh.length)return alert('Новых операций нет. Эти строки уже импортированы.');
+          if(!confirm(`Импортировать ${fresh.length} строк? Повторы: ${rows.length-fresh.length}.\n\nОстаток счёта НЕ изменится. Переводы между своими счетами не будут считаться доходом или расходом.`))return;
+          for(const r of fresh){
+            const own=r.kind==='own_transfer';
+            const type=own?'statement_internal':r.sign>0?'income':'expense';
+            APP_STATE.transactions.push({id:r.id,accountId:id,type,amount:r.amount,accountAmount:r.amount,currency:'KZT',category:own?'Между своими счетами':r.kind==='purchase'?'Покупки':r.kind==='external_transfer'?'Переводы':r.kind==='topup'?'Пополнения':'Выписка Kaspi',note:[r.operation,r.detail].filter(Boolean).join(' — '),date:new Date(r.date+'T12:00:00').toISOString(),source:'pdf-import',importSignature:r.signature,statementNoBalanceImpact:true,statementSign:r.sign});
+          }
+          pendingStatementRows=[];
+          document.getElementById('statementPreview').textContent='Добавлено '+fresh.length+' строк. Баланс счёта сохранён без изменений.';
+          saveState();
         }
 
         function showAsylPreview(){const expenses=APP_STATE.transactions.filter(t=>t.type==='expense');const sum=expenses.reduce((a,t)=>a+Number(t.amount),0);const groups={};for(const t of expenses)groups[t.category]=(groups[t.category]||0)+Number(t.amount);const top=Object.entries(groups).sort((a,b)=>b[1]-a[1])[0];document.getElementById('asylResult').textContent=`Локальная статистика (не ИИ): расходов ${sum.toLocaleString()} ${CURRENCY_SYMBOLS[APP_STATE.currency]}. ${top?'Больше всего: '+top[0]+' — '+top[1].toLocaleString(): 'Добавьте расходы для анализа.'}`;}
